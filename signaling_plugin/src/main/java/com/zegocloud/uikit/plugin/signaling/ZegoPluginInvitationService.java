@@ -1,6 +1,6 @@
 package com.zegocloud.uikit.plugin.signaling;
 
-import com.zegocloud.uikit.plugin.PluginEventListener;
+import com.zegocloud.uikit.plugin.common.PluginEventListener;
 import com.zegocloud.uikit.service.defines.ZegoUIKitUser;
 import java.util.HashMap;
 import java.util.List;

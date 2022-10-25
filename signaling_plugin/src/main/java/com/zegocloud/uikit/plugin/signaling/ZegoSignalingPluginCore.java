@@ -3,10 +3,10 @@ package com.zegocloud.uikit.plugin.signaling;
 import android.app.Application;
 import android.util.Log;
 import com.zegocloud.uikit.ZegoUIKit;
-import com.zegocloud.uikit.plugin.IZegoUIKitPlugin;
-import com.zegocloud.uikit.plugin.PluginCallbackListener;
-import com.zegocloud.uikit.plugin.PluginEventListener;
-import com.zegocloud.uikit.plugin.ZegoUIKitPluginType;
+import com.zegocloud.uikit.plugin.common.IZegoUIKitPlugin;
+import com.zegocloud.uikit.plugin.common.PluginCallbackListener;
+import com.zegocloud.uikit.plugin.common.PluginEventListener;
+import com.zegocloud.uikit.plugin.common.ZegoUIKitPluginType;
 import com.zegocloud.uikit.service.defines.ZegoUIKitUser;
 import com.zegocloud.uikit.utils.GenericUtils;
 import im.zego.zim.ZIM;
@@ -77,7 +77,6 @@ public class ZegoSignalingPluginCore implements IZegoUIKitPlugin {
                 JSONObject extendedData) {
                 super.onConnectionStateChanged(zim, state, event, extendedData);
                 zimConnectionState = state;
-
                 Log.d(ZegoUIKit.TAG,
                     "onConnectionStateChanged() called with: zim = [" + zim + "], state = [" + state + "], event = ["
                         + event + "], extendedData = [" + extendedData + "]");
@@ -98,15 +97,11 @@ public class ZegoSignalingPluginCore implements IZegoUIKitPlugin {
             public void onCallInvitationReceived(ZIM zim, ZIMCallInvitationReceivedInfo info, String callID) {
                 super.onCallInvitationReceived(zim, info, callID);
                 try {
-                    Log.d(ZegoUIKit.TAG,
-                        "onCallInvitationReceived() called with: zim = [" + zim + "], info = [" + info.extendedData
-                            + "], callID = [" + callID + "]");
                     JSONObject jsonObject = new JSONObject(info.extendedData);
                     int type = jsonObject.getInt("type");
                     String inviterName = getStringFromJson(jsonObject, "inviter_name");
                     String data = getStringFromJson(jsonObject, "data");
                     JSONObject dataJson = new JSONObject(data);
-                    String roomID = dataJson.getString("call_id");
                     JSONArray invitees = dataJson.getJSONArray("invitees");
                     List<ZegoUIKitUser> list = new ArrayList<>();
                     for (int i = 0; i < invitees.length(); i++) {
@@ -121,7 +116,8 @@ public class ZegoSignalingPluginCore implements IZegoUIKitPlugin {
                     InvitationData invitationData = new InvitationData(callID, inviteUser, invitationUsers, type);
                     addInvitationData(invitationData);
 
-                    invitationService.notifyUIKitInvitationReceived(inviteUser, type, data);
+                    dataJson.put("invitationID", callID);
+                    invitationService.notifyUIKitInvitationReceived(inviteUser, type, dataJson.toString());
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
@@ -136,9 +132,6 @@ public class ZegoSignalingPluginCore implements IZegoUIKitPlugin {
             @Override
             public void onCallInvitationCancelled(ZIM zim, ZIMCallInvitationCancelledInfo info, String callID) {
                 super.onCallInvitationCancelled(zim, info, callID);
-                Log.d(ZegoUIKit.TAG,
-                    "onCallInvitationCancelled() called with: zim = [" + zim + "], info = [" + info + "], callID = ["
-                        + callID + "]");
                 InvitationData invitationData = removeInvitationData(callID);
                 if (invitationData != null) {
                     invitationService.notifyUIKitInvitationCancelled(invitationData.inviter, info.extendedData);
@@ -240,11 +233,7 @@ public class ZegoSignalingPluginCore implements IZegoUIKitPlugin {
         zimUserInfo = new ZIMUserInfo();
         zimUserInfo.userID = userID;
         zimUserInfo.userName = userName;
-        ZIM.getInstance().login(zimUserInfo, null, new ZIMLoggedInCallback() {
-            @Override
-            public void onLoggedIn(ZIMError errorInfo) {
-            }
-        });
+        loginZIM(zimUserInfo);
     }
 
     public void logout() {
@@ -256,21 +245,23 @@ public class ZegoSignalingPluginCore implements IZegoUIKitPlugin {
 
 
     private void onBackground() {
-        Log.d(ZegoUIKit.TAG, "onBackground() called: " + zimConnectionState);
     }
 
     private void onForeground() {
-        Log.d(ZegoUIKit.TAG, "onForeground() called: " + zimConnectionState);
         if (zimConnectionState == ZIMConnectionState.DISCONNECTED) {
             if (zimUserInfo != null && ZIM.getInstance() != null) {
-                Log.d(ZegoUIKit.TAG, "onForeground() called , login...");
-                ZIM.getInstance().login(zimUserInfo, null, new ZIMLoggedInCallback() {
-                    @Override
-                    public void onLoggedIn(ZIMError errorInfo) {
-                    }
-                });
+                loginZIM(zimUserInfo);
             }
         }
+    }
+
+    private void loginZIM(ZIMUserInfo zimUserInfo) {
+        Log.d(ZegoUIKit.TAG, "loginSignal() called with: userID = [" + zimUserInfo.userID + "]");
+        ZIM.getInstance().login(zimUserInfo, null, new ZIMLoggedInCallback() {
+            @Override
+            public void onLoggedIn(ZIMError errorInfo) {
+            }
+        });
     }
 
     static String getStringFromJson(JSONObject jsonObject, String key) {
@@ -439,17 +430,27 @@ public class ZegoSignalingPluginCore implements IZegoUIKitPlugin {
         ZIMCallRejectConfig config = new ZIMCallRejectConfig();
         config.extendedData = data;
 
-        InvitationData result = null;
-        for (InvitationData value : invitationMap.values()) {
-            if (Objects.equals(value.inviter.userID, inviterID)) {
-                result = value;
-                break;
+        String invitationID = null;
+        try {
+            JSONObject jsonObject = new JSONObject(data);
+            invitationID = getStringFromJson(jsonObject, "invitationID");
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        if (invitationID == null) {
+            for (InvitationData value : invitationMap.values()) {
+                if (Objects.equals(value.inviter.userID, inviterID)) {
+                    invitationID = value.id;
+                    break;
+                }
             }
         }
-        if (result == null) {
+        if (invitationID == null) {
             return;
         }
-        ZIM.getInstance().callReject(result.id, config, new ZIMCallRejectionSentCallback() {
+
+        ZIM.getInstance().callReject(invitationID, config, new ZIMCallRejectionSentCallback() {
             @Override
             public void onCallRejectionSent(String callID, ZIMError errorInfo) {
                 if (errorInfo.code == ZIMErrorCode.SUCCESS) {
@@ -506,9 +507,9 @@ public class ZegoSignalingPluginCore implements IZegoUIKitPlugin {
 
     @Override
     public void invoke(String method, Map<String, Object> params, PluginCallbackListener listener) {
-        Log.d(ZegoUIKit.TAG,
-            "invoke() called with: method = [" + method + "], params = [" + params + "], listener = [" + listener
-                + "]");
+        //        Log.d(ZegoUIKit.TAG,
+        //            "invoke() called with: method = [" + method + "], params = [" + params + "], listener = [" + listener
+        //                + "]");
         switch (method) {
             case "init": {
                 Long appID = (Long) params.get("appID");
