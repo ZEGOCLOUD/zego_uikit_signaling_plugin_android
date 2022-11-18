@@ -32,26 +32,26 @@ import im.zego.zim.enums.ZIMConnectionEvent;
 import im.zego.zim.enums.ZIMConnectionState;
 import im.zego.zim.enums.ZIMErrorCode;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-public class ZegoSignalingPluginCore implements IZegoUIKitPlugin {
+public class ZegoSignalingPlugin implements IZegoUIKitPlugin {
 
-    private static ZegoSignalingPluginCore sInstance;
+    private static ZegoSignalingPlugin sInstance;
     private ZIMUserInfo zimUserInfo;
 
-    private ZegoSignalingPluginCore() {
+    private ZegoSignalingPlugin() {
     }
 
-    public static ZegoSignalingPluginCore getInstance() {
-        synchronized (ZegoSignalingPluginCore.class) {
+    public static ZegoSignalingPlugin getInstance() {
+        synchronized (ZegoSignalingPlugin.class) {
             if (sInstance == null) {
-                sInstance = new ZegoSignalingPluginCore();
+                sInstance = new ZegoSignalingPlugin();
             }
             return sInstance;
         }
@@ -77,9 +77,6 @@ public class ZegoSignalingPluginCore implements IZegoUIKitPlugin {
                 JSONObject extendedData) {
                 super.onConnectionStateChanged(zim, state, event, extendedData);
                 zimConnectionState = state;
-                Log.d(ZegoUIKit.TAG,
-                    "onConnectionStateChanged() called with: zim = [" + zim + "], state = [" + state + "], event = ["
-                        + event + "], extendedData = [" + extendedData + "]");
             }
 
             @Override
@@ -97,27 +94,26 @@ public class ZegoSignalingPluginCore implements IZegoUIKitPlugin {
             public void onCallInvitationReceived(ZIM zim, ZIMCallInvitationReceivedInfo info, String callID) {
                 super.onCallInvitationReceived(zim, info, callID);
                 try {
-                    JSONObject jsonObject = new JSONObject(info.extendedData);
-                    int type = jsonObject.getInt("type");
-                    String inviterName = getStringFromJson(jsonObject, "inviter_name");
-                    String data = getStringFromJson(jsonObject, "data");
-                    JSONObject dataJson = new JSONObject(data);
-                    JSONArray invitees = dataJson.getJSONArray("invitees");
-                    List<ZegoUIKitUser> list = new ArrayList<>();
-                    for (int i = 0; i < invitees.length(); i++) {
-                        JSONObject invitee = invitees.getJSONObject(i);
-                        String user_id = getStringFromJson(invitee, "user_id");
-                        String user_name = getStringFromJson(invitee, "user_name");
-                        list.add(new ZegoUIKitUser(user_id, user_name));
-                    }
-                    List<InvitationUser> invitationUsers = GenericUtils.map(list,
-                        uiKitUser -> new InvitationUser(uiKitUser, InvitationState.WAITING));
-                    ZegoUIKitUser inviteUser = new ZegoUIKitUser(info.inviter, inviterName);
-                    InvitationData invitationData = new InvitationData(callID, inviteUser, invitationUsers, type);
-                    addInvitationData(invitationData);
+                    JSONObject jsonObject = getJsonObjectFromString(info.extendedData);
+                    if (jsonObject != null) {
+                        int type = jsonObject.getInt("type");
+                        String inviterName = getStringFromJson(jsonObject, "inviter_name");
+                        String data = getStringFromJson(jsonObject, "data");
+                        JSONObject dataJson = getJsonObjectFromString(data);
+                        ZegoUIKitUser inviter = new ZegoUIKitUser(info.inviter, inviterName);
+                        InvitationUser invitee = new InvitationUser(
+                            new ZegoUIKitUser(zimUserInfo.userID, zimUserInfo.userName), InvitationState.WAITING);
+                        InvitationData invitationData = new InvitationData(callID, inviter,
+                            Collections.singletonList(invitee), type);
+                        addInvitationData(invitationData);
 
-                    dataJson.put("invitationID", callID);
-                    invitationService.notifyUIKitInvitationReceived(inviteUser, type, dataJson.toString());
+                        if (dataJson == null) {
+                            dataJson = new JSONObject();
+                        }
+                        dataJson.put("invitationID", callID);
+                        invitationService.notifyUIKitInvitationReceived(inviter, type, dataJson.toString());
+                    }
+
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
@@ -200,7 +196,7 @@ public class ZegoSignalingPluginCore implements IZegoUIKitPlugin {
                     return;
                 }
                 List<InvitationUser> timeoutUsers = GenericUtils.filter(invitationData.invitees,
-                    uiKitUser -> invitees.contains(uiKitUser.user.userID));
+                    uiKitUser -> invitees.contains(uiKitUser.getUserID()));
                 for (InvitationUser timeoutUser : timeoutUsers) {
                     timeoutUser.state = InvitationState.TIMEOUT;
                 }
@@ -256,7 +252,6 @@ public class ZegoSignalingPluginCore implements IZegoUIKitPlugin {
     }
 
     private void loginZIM(ZIMUserInfo zimUserInfo) {
-        Log.d(ZegoUIKit.TAG, "loginSignal() called with: userID = [" + zimUserInfo.userID + "]");
         ZIM.getInstance().login(zimUserInfo, null, new ZIMLoggedInCallback() {
             @Override
             public void onLoggedIn(ZIMError errorInfo) {
@@ -284,7 +279,7 @@ public class ZegoSignalingPluginCore implements IZegoUIKitPlugin {
         }
         InvitationUser invitationUser = null;
         for (InvitationUser invitee : invitationData.invitees) {
-            if (Objects.equals(invitee.user.userID, userID)) {
+            if (Objects.equals(invitee.getUserID(), userID)) {
                 invitationUser = invitee;
                 break;
             }
@@ -306,22 +301,12 @@ public class ZegoSignalingPluginCore implements IZegoUIKitPlugin {
 
     public void sendInvitation(List<String> invitees, int timeout, int type, String data,
         PluginCallbackListener listener) {
-        JSONObject jsonObject = new JSONObject();
         try {
+            JSONObject jsonObject = new JSONObject();
             jsonObject.put("type", type);
             jsonObject.put("inviter_name", zimUserInfo.userName);
             jsonObject.put("data", data);
 
-            JSONObject dataJson = new JSONObject(data);
-            String roomID = dataJson.getString("call_id");
-            JSONArray inviteesJson = dataJson.getJSONArray("invitees");
-            List<ZegoUIKitUser> list = new ArrayList<>();
-            for (int i = 0; i < inviteesJson.length(); i++) {
-                JSONObject invitee = inviteesJson.getJSONObject(i);
-                String user_id = ZegoSignalingPluginCore.getStringFromJson(invitee, "user_id");
-                String user_name = ZegoSignalingPluginCore.getStringFromJson(invitee, "user_name");
-                list.add(new ZegoUIKitUser(user_id, user_name));
-            }
             ZIMCallInviteConfig config = new ZIMCallInviteConfig();
             config.timeout = timeout;
             config.extendedData = jsonObject.toString();
@@ -331,15 +316,15 @@ public class ZegoSignalingPluginCore implements IZegoUIKitPlugin {
                 public void onCallInvitationSent(String callID, ZIMCallInvitationSentInfo info, ZIMError errorInfo) {
                     if (errorInfo.code == ZIMErrorCode.SUCCESS) {
                         ZegoUIKitUser inviter = new ZegoUIKitUser(zimUserInfo.userID, zimUserInfo.userName);
-                        List<InvitationUser> invitationUsers = GenericUtils.map(list,
-                            uiKitUser -> new InvitationUser(uiKitUser, InvitationState.WAITING));
+                        List<InvitationUser> invitationUsers = GenericUtils.map(invitees,
+                            userID -> new InvitationUser(new ZegoUIKitUser(userID), InvitationState.WAITING));
                         InvitationData invitationData = new InvitationData(callID, inviter, invitationUsers, type);
                         addInvitationData(invitationData);
 
                         List<String> errorUserIDs = GenericUtils.map(info.errorInvitees, userInfo -> userInfo.userID);
                         List<ZegoUIKitUser> errorUsers = new ArrayList<>();
                         for (InvitationUser invitee : invitationData.invitees) {
-                            if (errorUserIDs.contains(invitee.user.userID)) {
+                            if (errorUserIDs.contains(invitee.getUserID())) {
                                 invitee.state = InvitationState.ERROR;
                                 errorUsers.add(invitee.user);
                             }
@@ -366,10 +351,18 @@ public class ZegoSignalingPluginCore implements IZegoUIKitPlugin {
                 }
             });
         } catch (JSONException e) {
-            e.printStackTrace();
+
         }
     }
 
+    private JSONObject getJsonObjectFromString(String data) {
+        try {
+            return new JSONObject(data);
+        } catch (JSONException e) {
+            Log.w(ZegoUIKit.TAG, "data is empty");
+        }
+        return null;
+    }
 
     public void cancelInvitation(List<String> invitees, String data, PluginCallbackListener listener) {
         ZIMCallCancelConfig cancelConfig = new ZIMCallCancelConfig();
@@ -381,7 +374,7 @@ public class ZegoSignalingPluginCore implements IZegoUIKitPlugin {
                 break;
             }
             List<String> inviteUserIDs = GenericUtils.map(invitationData.invitees,
-                invitationUser -> invitationUser.user.userID);
+                invitationUser -> invitationUser.getUserID());
             for (String invitee : invitees) {
                 if (inviteUserIDs.contains(invitee)) {
                     callID = invitationData.id;
@@ -393,6 +386,11 @@ public class ZegoSignalingPluginCore implements IZegoUIKitPlugin {
             }
         }
         if (callID == null) {
+            if (listener != null) {
+                Map<String, Object> map = new HashMap<>();
+                map.put("code", 0);
+                listener.callback(map);
+            }
             return;
         }
         ZIM.getInstance().callCancel(invitees, callID, cancelConfig, new ZIMCallCancelSentCallback() {
@@ -402,8 +400,8 @@ public class ZegoSignalingPluginCore implements IZegoUIKitPlugin {
                 List<ZegoUIKitUser> errorCancelUsers = new ArrayList<>();
                 if (invitationData != null) {
                     for (InvitationUser invitationUser : invitationData.invitees) {
-                        boolean cancelUser = invitees.contains(invitationUser.user.userID);
-                        boolean cancelError = errorInvitees.contains(invitationUser.user.userID);
+                        boolean cancelUser = invitees.contains(invitationUser.getUserID());
+                        boolean cancelError = errorInvitees.contains(invitationUser.getUserID());
                         if (cancelUser && !cancelError) {
                             invitationUser.state = InvitationState.CANCEL;
                         } else {
@@ -431,11 +429,9 @@ public class ZegoSignalingPluginCore implements IZegoUIKitPlugin {
         config.extendedData = data;
 
         String invitationID = null;
-        try {
-            JSONObject jsonObject = new JSONObject(data);
+        JSONObject jsonObject = getJsonObjectFromString(data);
+        if (jsonObject != null) {
             invitationID = getStringFromJson(jsonObject, "invitationID");
-        } catch (JSONException e) {
-            e.printStackTrace();
         }
 
         if (invitationID == null) {
@@ -447,9 +443,13 @@ public class ZegoSignalingPluginCore implements IZegoUIKitPlugin {
             }
         }
         if (invitationID == null) {
+            if (listener != null) {
+                Map<String, Object> map = new HashMap<>();
+                map.put("code", 0);
+                listener.callback(map);
+            }
             return;
         }
-
         ZIM.getInstance().callReject(invitationID, config, new ZIMCallRejectionSentCallback() {
             @Override
             public void onCallRejectionSent(String callID, ZIMError errorInfo) {
@@ -497,19 +497,16 @@ public class ZegoSignalingPluginCore implements IZegoUIKitPlugin {
 
     @Override
     public ZegoUIKitPluginType getPluginType() {
-        return ZegoUIKitPluginType.CALL_INVITATION;
+        return ZegoUIKitPluginType.SIGNALING;
     }
 
     @Override
     public String getVersion() {
-        return "1.0.0";
+        return "1.1.0";
     }
 
     @Override
     public void invoke(String method, Map<String, Object> params, PluginCallbackListener listener) {
-        //        Log.d(ZegoUIKit.TAG,
-        //            "invoke() called with: method = [" + method + "], params = [" + params + "], listener = [" + listener
-        //                + "]");
         switch (method) {
             case "init": {
                 Long appID = (Long) params.get("appID");
