@@ -101,10 +101,20 @@ public class ZegoPluginInvitationService {
 
     public void sendInvitation(List<String> invitees, int timeout, int type, String data,
         PluginCallbackListener listener) {
+        ZIMUserInfo zimUserInfo = ZegoSignalingPlugin.getInstance().getZimUserInfo();
+        if (zimUserInfo == null) {
+            if (listener != null) {
+                Map<String, Object> map = new HashMap<>();
+                map.put("code", ZIMErrorCode.USER_IS_NOT_LOGGED.value());
+                map.put("message", "USER_IS_NOT_LOGGED");
+                map.put("callID", "");
+                listener.callback(map);
+            }
+            return;
+        }
         try {
             JSONObject jsonObject = new JSONObject();
             jsonObject.put("type", type);
-            ZIMUserInfo zimUserInfo = ZegoSignalingPlugin.getInstance().getZimUserInfo();
             jsonObject.put("inviter_name", zimUserInfo.userName);
             jsonObject.put("data", data);
 
@@ -330,6 +340,7 @@ public class ZegoPluginInvitationService {
             Map<String, Object> map = new HashMap<>();
             map.put("invitee", invitationUser.user);
             map.put("data", info.extendedData);
+            pluginEventListener.onPluginEvent("onCallInvitationAccepted", map);
         }
     }
 

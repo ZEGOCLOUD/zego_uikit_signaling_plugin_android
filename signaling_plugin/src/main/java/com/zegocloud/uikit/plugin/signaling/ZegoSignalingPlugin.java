@@ -27,6 +27,7 @@ import im.zego.zim.enums.ZIMConnectionEvent;
 import im.zego.zim.enums.ZIMConnectionState;
 import im.zego.zim.enums.ZIMErrorCode;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -167,16 +168,14 @@ public class ZegoSignalingPlugin implements IZegoUIKitPlugin {
             @Override
             public void onRoomAttributesUpdated(ZIM zim, ZIMRoomAttributesUpdateInfo info, String roomID) {
                 super.onRoomAttributesUpdated(zim, info, roomID);
-                roomPropertiesPluginService.notifyOnRoomPropertiesUpdated(info);
+                roomPropertiesPluginService.notifyOnRoomPropertiesUpdated(Arrays.asList(info));
             }
 
             @Override
             public void onRoomAttributesBatchUpdated(ZIM zim, ArrayList<ZIMRoomAttributesUpdateInfo> infos,
                 String roomID) {
                 super.onRoomAttributesBatchUpdated(zim, infos, roomID);
-                for (ZIMRoomAttributesUpdateInfo info : infos) {
-                    roomPropertiesPluginService.notifyOnRoomPropertiesUpdated(info);
-                }
+                roomPropertiesPluginService.notifyOnRoomPropertiesUpdated(infos);
             }
         });
     }
@@ -210,7 +209,7 @@ public class ZegoSignalingPlugin implements IZegoUIKitPlugin {
             @Override
             public void onLoggedIn(ZIMError errorInfo) {
                 isInLoginProcess = false;
-                if (errorInfo.code == ZIMErrorCode.SUCCESS) {
+                if (errorInfo.code != ZIMErrorCode.SUCCESS) {
                     currentZIMUserInfo = null;
                 }
                 if (listener != null) {
@@ -257,8 +256,6 @@ public class ZegoSignalingPlugin implements IZegoUIKitPlugin {
 
     @Override
     public void invoke(String method, Map<String, Object> params, PluginCallbackListener listener) {
-        Log.d(TAG, "invoke() called with: method = [" + method + "], params = [" + params + "], listener = [" + listener
-            + "]");
         switch (method) {
             case "init": {
                 Long appID = (Long) params.get("appID");

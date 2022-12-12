@@ -1,8 +1,8 @@
 package com.zegocloud.uikit.plugin.signaling;
 
-import android.util.Log;
 import com.zegocloud.uikit.plugin.common.PluginCallbackListener;
 import com.zegocloud.uikit.plugin.common.PluginEventListener;
+import com.zegocloud.uikit.service.defines.ZegoRoomAttributesInfo;
 import com.zegocloud.uikit.service.internal.UIKitCore;
 import im.zego.zim.ZIM;
 import im.zego.zim.callback.ZIMRoomAttributesBatchOperatedCallback;
@@ -113,11 +113,19 @@ public class ZegoRoomPropertiesPluginService {
         });
     }
 
-    public void notifyOnRoomPropertiesUpdated(ZIMRoomAttributesUpdateInfo info) {
+    public void notifyOnRoomPropertiesUpdated(List<ZIMRoomAttributesUpdateInfo> infos) {
+
         Map<String, Object> map = new HashMap<>();
-        map.put("isSet", info.action == ZIMRoomAttributesUpdateAction.SET);
-        map.put("properties", info.roomAttributes);
+        List<ZegoRoomAttributesInfo> roomAttributesInfoList = new ArrayList<>();
+        for (ZIMRoomAttributesUpdateInfo info : infos) {
+            boolean isSet = info.action == ZIMRoomAttributesUpdateAction.SET;
+            ZegoRoomAttributesInfo attributesInfo = new ZegoRoomAttributesInfo(isSet, info.roomAttributes);
+            roomAttributesInfoList.add(attributesInfo);
+        }
+        map.put("infos", roomAttributesInfoList);
+
         pluginEventListener.onPluginEvent("onRoomPropertiesUpdated", map);
+
     }
 
 }
