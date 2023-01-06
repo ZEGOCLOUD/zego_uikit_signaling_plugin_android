@@ -6,7 +6,9 @@ import com.zegocloud.uikit.ZegoUIKit;
 import com.zegocloud.uikit.plugin.common.IZegoUIKitPlugin;
 import com.zegocloud.uikit.plugin.common.PluginCallbackListener;
 import com.zegocloud.uikit.plugin.common.PluginEventListener;
+import com.zegocloud.uikit.plugin.common.ZegoSignalingInRoomTextMessage;
 import com.zegocloud.uikit.plugin.common.ZegoUIKitPluginType;
+import com.zegocloud.uikit.utils.GenericUtils;
 import im.zego.zim.ZIM;
 import im.zego.zim.callback.ZIMEventHandler;
 import im.zego.zim.callback.ZIMLoggedInCallback;
@@ -16,18 +18,22 @@ import im.zego.zim.entity.ZIMCallInvitationCancelledInfo;
 import im.zego.zim.entity.ZIMCallInvitationReceivedInfo;
 import im.zego.zim.entity.ZIMCallInvitationRejectedInfo;
 import im.zego.zim.entity.ZIMError;
+import im.zego.zim.entity.ZIMMessage;
 import im.zego.zim.entity.ZIMRoomAttributesBatchOperationConfig;
 import im.zego.zim.entity.ZIMRoomAttributesDeleteConfig;
 import im.zego.zim.entity.ZIMRoomAttributesSetConfig;
 import im.zego.zim.entity.ZIMRoomAttributesUpdateInfo;
 import im.zego.zim.entity.ZIMRoomMemberAttributesUpdateInfo;
 import im.zego.zim.entity.ZIMRoomOperatedInfo;
+import im.zego.zim.entity.ZIMTextMessage;
 import im.zego.zim.entity.ZIMUserInfo;
 import im.zego.zim.enums.ZIMConnectionEvent;
 import im.zego.zim.enums.ZIMConnectionState;
 import im.zego.zim.enums.ZIMErrorCode;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -58,6 +64,7 @@ public class ZegoSignalingPlugin implements IZegoUIKitPlugin {
     private ZIMConnectionState zimConnectionState;
     private ZIMUserInfo currentZIMUserInfo;
     private boolean isInLoginProcess;
+    private PluginEventListener pluginEventListener;
 
     private void init(Application application, Long appID, String appSign) {
         ZIMAppConfig zimAppConfig = new ZIMAppConfig();
@@ -176,6 +183,37 @@ public class ZegoSignalingPlugin implements IZegoUIKitPlugin {
                 String roomID) {
                 super.onRoomAttributesBatchUpdated(zim, infos, roomID);
                 roomPropertiesPluginService.notifyOnRoomPropertiesUpdated(infos);
+            }
+
+            @Override
+            public void onReceiveRoomMessage(ZIM zim, ArrayList<ZIMMessage> messageList, String fromRoomID) {
+                super.onReceiveRoomMessage(zim, messageList, fromRoomID);
+
+                Collections.sort(messageList, new Comparator<ZIMMessage>() {
+                    @Override
+                    public int compare(ZIMMessage o1, ZIMMessage o2) {
+                        return (int) (o1.getTimestamp() - o2.getTimestamp());
+                    }
+                });
+
+                List<ZegoSignalingInRoomTextMessage> signalMessageList = GenericUtils.map(messageList, zimMessage -> {
+                    if (zimMessage instanceof ZIMTextMessage) {
+                        ZIMTextMessage textMessage = (ZIMTextMessage) zimMessage;
+                        ZegoSignalingInRoomTextMessage message = new ZegoSignalingInRoomTextMessage();
+                        message.messageID = textMessage.getMessageID();
+                        message.timestamp = textMessage.getMessageID();
+                        message.orderKey = textMessage.getOrderKey();
+                        message.text = textMessage.message;
+                        message.senderUserID = textMessage.getSenderUserID();
+                        return message;
+                    } else {
+                        return null;
+                    }
+                });
+
+                Map<String, Object> map = new HashMap<>();
+                map.put("signalMessageList", signalMessageList);
+                pluginEventListener.onPluginEvent("onReceiveRoomMessage", map);
             }
         });
     }
@@ -374,6 +412,7 @@ public class ZegoSignalingPlugin implements IZegoUIKitPlugin {
 
     @Override
     public void registerPluginEventHandler(PluginEventListener listener) {
+        pluginEventListener = listener;
         invitationService.setPluginEventListener(listener);
         userInRoomAttributesPluginService.setPluginEventListener(listener);
         roomPropertiesPluginService.setPluginEventListener(listener);
