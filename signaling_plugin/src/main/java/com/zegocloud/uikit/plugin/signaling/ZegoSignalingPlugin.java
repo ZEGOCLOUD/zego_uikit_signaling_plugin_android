@@ -8,6 +8,8 @@ import com.zegocloud.uikit.plugin.common.PluginCallbackListener;
 import com.zegocloud.uikit.plugin.common.PluginEventListener;
 import com.zegocloud.uikit.plugin.common.ZegoSignalingInRoomTextMessage;
 import com.zegocloud.uikit.plugin.common.ZegoUIKitPluginType;
+import com.zegocloud.uikit.service.defines.ZegoSignalingPluginNotificationConfig;
+
 import com.zegocloud.uikit.utils.GenericUtils;
 import im.zego.zim.ZIM;
 import im.zego.zim.callback.ZIMEventHandler;
@@ -30,6 +32,9 @@ import im.zego.zim.entity.ZIMUserInfo;
 import im.zego.zim.enums.ZIMConnectionEvent;
 import im.zego.zim.enums.ZIMConnectionState;
 import im.zego.zim.enums.ZIMErrorCode;
+import im.zego.zpns.ZPNsManager;
+import im.zego.zpns.util.ZPNsConfig;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -42,6 +47,7 @@ import org.json.JSONObject;
 
 public class ZegoSignalingPlugin implements IZegoUIKitPlugin {
 
+    private Application application;
     private static ZegoSignalingPlugin sInstance;
 
     private ZegoSignalingPlugin() {
@@ -64,9 +70,11 @@ public class ZegoSignalingPlugin implements IZegoUIKitPlugin {
     private ZIMConnectionState zimConnectionState;
     private ZIMUserInfo currentZIMUserInfo;
     private boolean isInLoginProcess;
+    private boolean notifyWhenAppRunningInBackgroundOrQuit;
     private PluginEventListener pluginEventListener;
 
     private void init(Application application, Long appID, String appSign) {
+        this.application = application;
         ZIMAppConfig zimAppConfig = new ZIMAppConfig();
         zimAppConfig.appID = appID;
         zimAppConfig.appSign = appSign;
@@ -321,7 +329,8 @@ public class ZegoSignalingPlugin implements IZegoUIKitPlugin {
                 int timeout = (int) params.get("timeout");
                 int type = (int) params.get("type");
                 String data = (String) params.get("data");
-                invitationService.sendInvitation(invitees, timeout, type, data, listener);
+                ZegoSignalingPluginNotificationConfig notificationConfig = (ZegoSignalingPluginNotificationConfig) params.get("notificationConfig");
+                invitationService.sendInvitation(invitees, timeout, type, data,notificationConfig,notifyWhenAppRunningInBackgroundOrQuit,listener);
             }
             break;
             case "cancelInvitation": {
@@ -420,5 +429,23 @@ public class ZegoSignalingPlugin implements IZegoUIKitPlugin {
 
     ZIMUserInfo getZimUserInfo() {
         return currentZIMUserInfo;
+    }
+
+    @Override
+    public void enableNotifyWhenAppRunningInBackgroundOrQuit(boolean enable){
+        this.notifyWhenAppRunningInBackgroundOrQuit = enable;
+        try {
+            if(enable){
+                ZPNsManager.enableDebug(BuildConfig.DEBUG);
+                ZPNsConfig zpnsConfig = new ZPNsConfig();
+                zpnsConfig.enableFCMPush(); // FCM
+                ZPNsManager.setPushConfig(zpnsConfig);
+                ZPNsManager.getInstance().registerPush(application);
+            }else {
+                ZPNsManager.getInstance().unregisterPush();
+            }
+        }catch (Exception e){
+            e.printStackTrace();
+        }
     }
 }

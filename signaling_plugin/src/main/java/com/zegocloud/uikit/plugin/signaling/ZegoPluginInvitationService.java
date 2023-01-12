@@ -1,9 +1,13 @@
 package com.zegocloud.uikit.plugin.signaling;
 
+import android.text.TextUtils;
+
 import com.zegocloud.uikit.plugin.common.PluginCallbackListener;
 import com.zegocloud.uikit.plugin.common.PluginEventListener;
+import com.zegocloud.uikit.service.defines.ZegoSignalingPluginNotificationConfig;
 import com.zegocloud.uikit.service.defines.ZegoUIKitUser;
 import com.zegocloud.uikit.utils.GenericUtils;
+
 import im.zego.zim.ZIM;
 import im.zego.zim.callback.ZIMCallAcceptanceSentCallback;
 import im.zego.zim.callback.ZIMCallCancelSentCallback;
@@ -19,14 +23,17 @@ import im.zego.zim.entity.ZIMCallInvitationSentInfo;
 import im.zego.zim.entity.ZIMCallInviteConfig;
 import im.zego.zim.entity.ZIMCallRejectConfig;
 import im.zego.zim.entity.ZIMError;
+import im.zego.zim.entity.ZIMPushConfig;
 import im.zego.zim.entity.ZIMUserInfo;
 import im.zego.zim.enums.ZIMErrorCode;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -69,9 +76,9 @@ public class ZegoPluginInvitationService {
                 ZegoUIKitUser inviter = new ZegoUIKitUser(info.inviter, inviterName);
                 ZIMUserInfo zimUserInfo = ZegoSignalingPlugin.getInstance().getZimUserInfo();
                 InvitationUser invitee = new InvitationUser(new ZegoUIKitUser(zimUserInfo.userID, zimUserInfo.userName),
-                    InvitationState.WAITING);
+                        InvitationState.WAITING);
                 InvitationData invitationData = new InvitationData(callID, inviter, Collections.singletonList(invitee),
-                    type);
+                        type);
                 addInvitationData(invitationData);
 
                 if (dataJson == null) {
@@ -99,8 +106,8 @@ public class ZegoPluginInvitationService {
         return invitationMap.remove(callID);
     }
 
-    public void sendInvitation(List<String> invitees, int timeout, int type, String data,
-        PluginCallbackListener listener) {
+    public void sendInvitation(List<String> invitees, int timeout, int type, String data, ZegoSignalingPluginNotificationConfig notificationConfig,
+                               boolean notifyWhenAppIsInTheBackgroundOrQuit, PluginCallbackListener listener) {
         ZIMUserInfo zimUserInfo = ZegoSignalingPlugin.getInstance().getZimUserInfo();
         if (zimUserInfo == null) {
             if (listener != null) {
@@ -121,6 +128,14 @@ public class ZegoPluginInvitationService {
             ZIMCallInviteConfig config = new ZIMCallInviteConfig();
             config.timeout = timeout;
             config.extendedData = jsonObject.toString();
+            ZIMPushConfig pushConfig = new ZIMPushConfig();
+            if (notifyWhenAppIsInTheBackgroundOrQuit && notificationConfig != null) {
+                pushConfig.payload = data;
+                pushConfig.title = TextUtils.isEmpty(notificationConfig.getTitle()) ? zimUserInfo.userName : notificationConfig.getTitle();
+                pushConfig.content = notificationConfig.getMessage();
+                pushConfig.resourcesID = notificationConfig.getResourceID();
+                config.pushConfig = pushConfig;
+            }
 
             ZIM.getInstance().callInvite(invitees, config, new ZIMCallInvitationSentCallback() {
                 @Override
@@ -128,7 +143,7 @@ public class ZegoPluginInvitationService {
                     if (errorInfo.code == ZIMErrorCode.SUCCESS) {
                         ZegoUIKitUser inviter = new ZegoUIKitUser(zimUserInfo.userID, zimUserInfo.userName);
                         List<InvitationUser> invitationUsers = GenericUtils.map(invitees,
-                            userID -> new InvitationUser(new ZegoUIKitUser(userID), InvitationState.WAITING));
+                                userID -> new InvitationUser(new ZegoUIKitUser(userID), InvitationState.WAITING));
                         InvitationData invitationData = new InvitationData(callID, inviter, invitationUsers, type);
                         addInvitationData(invitationData);
 
@@ -176,7 +191,7 @@ public class ZegoPluginInvitationService {
                 break;
             }
             List<String> inviteUserIDs = GenericUtils.map(invitationData.invitees,
-                invitationUser -> invitationUser.getUserID());
+                    invitationUser -> invitationUser.getUserID());
             for (String invitee : invitees) {
                 if (inviteUserIDs.contains(invitee)) {
                     callID = invitationData.id;
@@ -372,7 +387,7 @@ public class ZegoPluginInvitationService {
             return;
         }
         List<InvitationUser> timeoutUsers = GenericUtils.filter(invitationData.invitees,
-            uiKitUser -> invitees.contains(uiKitUser.getUserID()));
+                uiKitUser -> invitees.contains(uiKitUser.getUserID()));
         for (InvitationUser timeoutUser : timeoutUsers) {
             timeoutUser.state = InvitationState.TIMEOUT;
         }
