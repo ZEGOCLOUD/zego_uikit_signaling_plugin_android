@@ -23,3 +23,4 @@
 -keep class im.zego.**{*;}
 -keep class com.zego.**{*;}
 -keep class **.**.zego_zpns.** { *; }
+-keep class com.zegocloud.uikit.plugin.signaling.**{*;}

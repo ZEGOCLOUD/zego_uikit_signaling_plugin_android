@@ -1,53 +1,31 @@
 package com.zegocloud.uikit.plugin.signaling;
 
 import android.app.Application;
-import android.util.Log;
-import com.zegocloud.uikit.ZegoUIKit;
-import com.zegocloud.uikit.plugin.common.IZegoUIKitPlugin;
-import com.zegocloud.uikit.plugin.common.PluginCallbackListener;
-import com.zegocloud.uikit.plugin.common.PluginEventListener;
-import com.zegocloud.uikit.plugin.common.ZegoSignalingInRoomTextMessage;
-import com.zegocloud.uikit.plugin.common.ZegoUIKitPluginType;
-import com.zegocloud.uikit.service.defines.ZegoSignalingPluginNotificationConfig;
+import com.zegocloud.uikit.pluin.adapter.plugins.CancelInvitationCallback;
+import com.zegocloud.uikit.pluin.adapter.plugins.ConnectUserCallback;
+import com.zegocloud.uikit.pluin.adapter.plugins.EndRoomBatchOperationCallback;
+import com.zegocloud.uikit.pluin.adapter.plugins.InvitationCallback;
+import com.zegocloud.uikit.pluin.adapter.plugins.QueryRoomPropertyCallback;
+import com.zegocloud.uikit.pluin.adapter.plugins.QueryUsersInRoomAttributesCallback;
+import com.zegocloud.uikit.pluin.adapter.plugins.RenewTokenCallback;
+import com.zegocloud.uikit.pluin.adapter.plugins.ResponseInvitationCallback;
+import com.zegocloud.uikit.pluin.adapter.plugins.RoomCallback;
+import com.zegocloud.uikit.pluin.adapter.plugins.RoomPropertyOperationCallback;
+import com.zegocloud.uikit.pluin.adapter.plugins.SendRoomMessageCallback;
+import com.zegocloud.uikit.pluin.adapter.plugins.SetUsersInRoomAttributesCallback;
+import com.zegocloud.uikit.pluin.adapter.plugins.ZegoPluginType;
+import com.zegocloud.uikit.pluin.adapter.plugins.ZegoSignalingPluginEventHandler;
+import com.zegocloud.uikit.pluin.adapter.plugins.ZegoSignalingPluginNotificationConfig;
+import com.zegocloud.uikit.pluin.adapter.plugins.ZegoSignalingPluginProtocol;
 
-import com.zegocloud.uikit.utils.GenericUtils;
-import im.zego.zim.ZIM;
 import im.zego.zim.callback.ZIMEventHandler;
-import im.zego.zim.callback.ZIMLoggedInCallback;
-import im.zego.zim.entity.ZIMAppConfig;
-import im.zego.zim.entity.ZIMCallInvitationAcceptedInfo;
-import im.zego.zim.entity.ZIMCallInvitationCancelledInfo;
-import im.zego.zim.entity.ZIMCallInvitationReceivedInfo;
-import im.zego.zim.entity.ZIMCallInvitationRejectedInfo;
-import im.zego.zim.entity.ZIMError;
-import im.zego.zim.entity.ZIMMessage;
-import im.zego.zim.entity.ZIMRoomAttributesBatchOperationConfig;
-import im.zego.zim.entity.ZIMRoomAttributesDeleteConfig;
-import im.zego.zim.entity.ZIMRoomAttributesSetConfig;
-import im.zego.zim.entity.ZIMRoomAttributesUpdateInfo;
-import im.zego.zim.entity.ZIMRoomMemberAttributesUpdateInfo;
-import im.zego.zim.entity.ZIMRoomOperatedInfo;
-import im.zego.zim.entity.ZIMTextMessage;
-import im.zego.zim.entity.ZIMUserInfo;
-import im.zego.zim.enums.ZIMConnectionEvent;
-import im.zego.zim.enums.ZIMConnectionState;
-import im.zego.zim.enums.ZIMErrorCode;
-import im.zego.zpns.ZPNsManager;
-import im.zego.zpns.util.ZPNsConfig;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import org.json.JSONException;
-import org.json.JSONObject;
+import java.util.TimerTask;
 
-public class ZegoSignalingPlugin implements IZegoUIKitPlugin {
+public class ZegoSignalingPlugin implements ZegoSignalingPluginProtocol {
 
-    private Application application;
     private static ZegoSignalingPlugin sInstance;
 
     private ZegoSignalingPlugin() {
@@ -62,390 +40,137 @@ public class ZegoSignalingPlugin implements IZegoUIKitPlugin {
         }
     }
 
-    private static final String TAG = "ZegoSignalingPlugin";
+    private ZegoSignalingPluginService service = new ZegoSignalingPluginService();
 
-    private ZegoPluginInvitationService invitationService = new ZegoPluginInvitationService();
-    private ZegoUserInRoomAttributesPluginService userInRoomAttributesPluginService = new ZegoUserInRoomAttributesPluginService();
-    private ZegoRoomPropertiesPluginService roomPropertiesPluginService = new ZegoRoomPropertiesPluginService();
-    private ZIMConnectionState zimConnectionState;
-    private ZIMUserInfo currentZIMUserInfo;
-    private boolean isInLoginProcess;
-    private boolean notifyWhenAppRunningInBackgroundOrQuit;
-    private PluginEventListener pluginEventListener;
-
-    private void init(Application application, Long appID, String appSign) {
-        this.application = application;
-        ZIMAppConfig zimAppConfig = new ZIMAppConfig();
-        zimAppConfig.appID = appID;
-        zimAppConfig.appSign = appSign;
-        ZIM.create(zimAppConfig, application);
-        ZIM.getInstance().setEventHandler(new ZIMEventHandler() {
-
-            @Override
-            public void onRoomMemberLeft(ZIM zim, ArrayList<ZIMUserInfo> memberList, String roomID) {
-                super.onRoomMemberLeft(zim, memberList, roomID);
-                userInRoomAttributesPluginService.onRoomMemberLeft(zim, memberList, roomID);
-            }
-
-            @Override
-            public void onConnectionStateChanged(ZIM zim, ZIMConnectionState state, ZIMConnectionEvent event,
-                JSONObject extendedData) {
-                super.onConnectionStateChanged(zim, state, event, extendedData);
-                zimConnectionState = state;
-                Log.d(TAG,
-                    "onConnectionStateChanged() called with: zim = [" + zim + "], state = [" + state + "], event = ["
-                        + event + "], extendedData = [" + extendedData + "]");
-            }
-
-            @Override
-            public void onError(ZIM zim, ZIMError errorInfo) {
-                super.onError(zim, errorInfo);
-            }
-
-            /**
-             * invitee received a call from inviter.
-             * @param zim
-             * @param info
-             * @param callID
-             */
-            @Override
-            public void onCallInvitationReceived(ZIM zim, ZIMCallInvitationReceivedInfo info, String callID) {
-                super.onCallInvitationReceived(zim, info, callID);
-                invitationService.onCallInvitationReceived(zim, info, callID);
-            }
-
-            /**
-             * invitee received when inviter cancelled call.
-             * @param zim
-             * @param info
-             * @param callID
-             */
-            @Override
-            public void onCallInvitationCancelled(ZIM zim, ZIMCallInvitationCancelledInfo info, String callID) {
-                super.onCallInvitationCancelled(zim, info, callID);
-                invitationService.onCallInvitationCancelled(zim, info, callID);
-            }
-
-            /**
-             * inviter received invitees accept.
-             * @param zim
-             * @param info
-             * @param callID
-             */
-            @Override
-            public void onCallInvitationAccepted(ZIM zim, ZIMCallInvitationAcceptedInfo info, String callID) {
-                super.onCallInvitationAccepted(zim, info, callID);
-                invitationService.onCallInvitationAccepted(zim, info, callID);
-            }
-
-            /**
-             * inviter received invitees reject.
-             * @param zim
-             * @param info
-             * @param callID
-             */
-            @Override
-            public void onCallInvitationRejected(ZIM zim, ZIMCallInvitationRejectedInfo info, String callID) {
-                super.onCallInvitationRejected(zim, info, callID);
-                invitationService.onCallInvitationRejected(zim, info, callID);
-            }
-
-            /**
-             * invitee doesn't respond to call,missed
-             * @param zim
-             * @param callID
-             */
-            @Override
-            public void onCallInvitationTimeout(ZIM zim, String callID) {
-                super.onCallInvitationTimeout(zim, callID);
-                invitationService.onCallInvitationTimeout(zim, callID);
-            }
-
-            /**
-             * inviter received invitees no respond,they missed.
-             * @param zim
-             * @param invitees
-             * @param callID
-             */
-            @Override
-            public void onCallInviteesAnsweredTimeout(ZIM zim, ArrayList<String> invitees, String callID) {
-                super.onCallInviteesAnsweredTimeout(zim, invitees, callID);
-                invitationService.onCallInviteesAnsweredTimeout(zim, invitees, callID);
-            }
-
-            @Override
-            public void onRoomMemberAttributesUpdated(ZIM zim, ArrayList<ZIMRoomMemberAttributesUpdateInfo> infos,
-                ZIMRoomOperatedInfo operatedInfo, String roomID) {
-                super.onRoomMemberAttributesUpdated(zim, infos, operatedInfo, roomID);
-                userInRoomAttributesPluginService.notifyOnRoomMemberAttributesUpdated(infos, operatedInfo, roomID);
-            }
-
-            @Override
-            public void onRoomAttributesUpdated(ZIM zim, ZIMRoomAttributesUpdateInfo info, String roomID) {
-                super.onRoomAttributesUpdated(zim, info, roomID);
-                roomPropertiesPluginService.notifyOnRoomPropertiesUpdated(Arrays.asList(info));
-            }
-
-            @Override
-            public void onRoomAttributesBatchUpdated(ZIM zim, ArrayList<ZIMRoomAttributesUpdateInfo> infos,
-                String roomID) {
-                super.onRoomAttributesBatchUpdated(zim, infos, roomID);
-                roomPropertiesPluginService.notifyOnRoomPropertiesUpdated(infos);
-            }
-
-            @Override
-            public void onReceiveRoomMessage(ZIM zim, ArrayList<ZIMMessage> messageList, String fromRoomID) {
-                super.onReceiveRoomMessage(zim, messageList, fromRoomID);
-
-                Collections.sort(messageList, new Comparator<ZIMMessage>() {
-                    @Override
-                    public int compare(ZIMMessage o1, ZIMMessage o2) {
-                        return (int) (o1.getTimestamp() - o2.getTimestamp());
-                    }
-                });
-
-                List<ZegoSignalingInRoomTextMessage> signalMessageList = GenericUtils.map(messageList, zimMessage -> {
-                    if (zimMessage instanceof ZIMTextMessage) {
-                        ZIMTextMessage textMessage = (ZIMTextMessage) zimMessage;
-                        ZegoSignalingInRoomTextMessage message = new ZegoSignalingInRoomTextMessage();
-                        message.messageID = textMessage.getMessageID();
-                        message.timestamp = textMessage.getMessageID();
-                        message.orderKey = textMessage.getOrderKey();
-                        message.text = textMessage.message;
-                        message.senderUserID = textMessage.getSenderUserID();
-                        return message;
-                    } else {
-                        return null;
-                    }
-                });
-
-                Map<String, Object> map = new HashMap<>();
-                map.put("signalMessageList", signalMessageList);
-                pluginEventListener.onPluginEvent("onReceiveRoomMessage", map);
-            }
-        });
-    }
-
-    private void login(String userID, String userName, PluginCallbackListener listener) {
-        currentZIMUserInfo = new ZIMUserInfo();
-        currentZIMUserInfo.userID = userID;
-        currentZIMUserInfo.userName = userName;
-        loginZIM(currentZIMUserInfo, listener);
-    }
-
-    private void logout() {
-        currentZIMUserInfo = null;
-        if (ZIM.getInstance() != null) {
-            ZIM.getInstance().logout();
-        }
-    }
-
-    private void onActivityStarted() {
-        if (ZIM.getInstance() != null) {
-            boolean isDisconnected = zimConnectionState == ZIMConnectionState.DISCONNECTED;
-            if (currentZIMUserInfo != null && isDisconnected && !isInLoginProcess) {
-                loginZIM(currentZIMUserInfo, null);
-            }
-        }
-    }
-
-    private void loginZIM(ZIMUserInfo zimUserInfo, PluginCallbackListener listener) {
-        isInLoginProcess = true;
-        ZIM.getInstance().login(zimUserInfo, null, new ZIMLoggedInCallback() {
-            @Override
-            public void onLoggedIn(ZIMError errorInfo) {
-                isInLoginProcess = false;
-                if (errorInfo.code != ZIMErrorCode.SUCCESS) {
-                    currentZIMUserInfo = null;
-                }
-                if (listener != null) {
-                    Map<String, Object> map = new HashMap<>();
-                    map.put("code", errorInfo.code.value());
-                    map.put("message", errorInfo.message);
-                    listener.callback(map);
-                }
-            }
-        });
-    }
-
-    static JSONObject getJsonObjectFromString(String data) {
-        try {
-            return new JSONObject(data);
-        } catch (JSONException e) {
-            Log.w(ZegoUIKit.TAG, "data is empty");
-        }
-        return null;
-    }
-
-    static String getStringFromJson(JSONObject jsonObject, String key) {
-        try {
-            if (jsonObject.has(key)) {
-                return jsonObject.getString(key);
-            } else {
-                return null;
-            }
-        } catch (JSONException e) {
-            e.printStackTrace();
-            return null;
-        }
+    @Override
+    public void init(Application application, Long appID, String appSign) {
+        service.init(application, appID, appSign);
     }
 
     @Override
-    public ZegoUIKitPluginType getPluginType() {
-        return ZegoUIKitPluginType.SIGNALING;
+    public void connectUser(String userID, String userName, ConnectUserCallback callback) {
+        service.connectUser(userID, userName, callback);
+    }
+
+    @Override
+    public void connectUser(String userID, String userName, String token, ConnectUserCallback callback) {
+        service.connectUser(userID, userName, token, callback);
+    }
+
+    @Override
+    public void disconnectUser() {
+        service.disconnectUser();
+    }
+
+    @Override
+    public void renewToken(String token, RenewTokenCallback callback) {
+        service.renewToken(token, callback);
+    }
+
+    @Override
+    public void sendInvitation(List<String> invitees, int timeout, String data, ZegoSignalingPluginNotificationConfig notificationConfig, InvitationCallback callback) {
+        service.sendInvitation(invitees, timeout, data, notificationConfig, callback);
+    }
+
+    @Override
+    public void cancelInvitation(List<String> invitees, String invitationID, String data,
+                                 CancelInvitationCallback callback) {
+        service.cancelInvitation(invitees, invitationID, data, callback);
+    }
+
+    @Override
+    public void refuseInvitation(String invitationID, String data, ResponseInvitationCallback callback) {
+        service.refuseInvitation(invitationID, data, callback);
+    }
+
+    @Override
+    public void acceptInvitation(String invitationID, String data, ResponseInvitationCallback callback) {
+        service.acceptInvitation(invitationID, data, callback);
+    }
+
+    @Override
+    public void joinRoom(String roomID, RoomCallback callback) {
+        service.joinRoom(roomID, callback);
+    }
+
+    @Override
+    public void joinRoom(String roomID, String roomName, RoomCallback callback) {
+        service.joinRoom(roomID, roomName, callback);
+    }
+
+    @Override
+    public void leaveRoom(String roomID, RoomCallback callback) {
+        service.leaveRoom(roomID, callback);
+    }
+
+    @Override
+    public void setUsersInRoomAttributes(HashMap<String, String> attributes, List<String> userIDs, String roomID,
+                                         SetUsersInRoomAttributesCallback callback) {
+        service.setUsersInRoomAttributes(attributes, userIDs, roomID, callback);
+    }
+
+    @Override
+    public void queryUsersInRoomAttributes(String roomID, int count, String nextFlag,
+                                           QueryUsersInRoomAttributesCallback callback) {
+        service.queryUsersInRoomAttributes(roomID, count, nextFlag, callback);
+    }
+
+    @Override
+    public void updateRoomProperty(HashMap<String, String> attributes, String roomID, boolean isForce,
+                                   boolean isDeleteAfterOwnerLeft, boolean isUpdateOwner, RoomPropertyOperationCallback callback) {
+        service.updateRoomProperty(attributes, roomID, isForce, isDeleteAfterOwnerLeft, isUpdateOwner, callback);
+    }
+
+    @Override
+    public void deleteRoomProperties(List<String> keys, String roomID, boolean isForce,
+                                     RoomPropertyOperationCallback callback) {
+        service.deleteRoomProperties(keys, roomID, isForce, callback);
+    }
+
+    @Override
+    public void queryRoomProperties(String roomID, QueryRoomPropertyCallback callback) {
+        service.queryRoomProperties(roomID, callback);
+    }
+
+    @Override
+    public void beginRoomPropertiesBatchOperation(String roomID, boolean isDeleteAfterOwnerLeft, boolean isForce,
+                                                  boolean isUpdateOwner) {
+        service.beginRoomPropertiesBatchOperation(roomID, isDeleteAfterOwnerLeft, isForce, isUpdateOwner);
+    }
+
+    @Override
+    public void endRoomPropertiesBatchOperation(String roomID, EndRoomBatchOperationCallback callback) {
+        service.endRoomPropertiesBatchOperation(roomID, callback);
+    }
+
+    @Override
+    public void sendRoomMessage(String text, String roomID, SendRoomMessageCallback callback) {
+        service.sendRoomMessage(text, roomID, callback);
+    }
+
+    @Override
+    public ZegoPluginType getPluginType() {
+        return ZegoPluginType.SIGNALING;
     }
 
     @Override
     public String getVersion() {
-        return "1.2.0";
+        return "1.3.0";
     }
 
     @Override
-    public void invoke(String method, Map<String, Object> params, PluginCallbackListener listener) {
-        switch (method) {
-            case "init": {
-                Long appID = (Long) params.get("appID");
-                String appSign = (String) params.get("appSign");
-                Application application = (Application) params.get("application");
-                init(application, appID, appSign);
-            }
-            break;
-            case "login": {
-                String userID = (String) params.get("userID");
-                String userName = (String) params.get("userName");
-                login(userID, userName, listener);
-            }
-            break;
-            case "logout": {
-                logout();
-            }
-            break;
-            case "onActivityStarted": {
-                onActivityStarted();
-            }
-            break;
-            case "sendInvitation": {
-                List<String> invitees = (List<String>) params.get("invitees");
-                int timeout = (int) params.get("timeout");
-                int type = (int) params.get("type");
-                String data = (String) params.get("data");
-                ZegoSignalingPluginNotificationConfig notificationConfig = (ZegoSignalingPluginNotificationConfig) params.get("notificationConfig");
-                invitationService.sendInvitation(invitees, timeout, type, data,notificationConfig,notifyWhenAppRunningInBackgroundOrQuit,listener);
-            }
-            break;
-            case "cancelInvitation": {
-                List<String> invitees = (List<String>) params.get("invitees");
-                String data = (String) params.get("data");
-                invitationService.cancelInvitation(invitees, data, listener);
-            }
-            break;
-            case "refuseInvitation": {
-                String inviterID = (String) params.get("inviterID");
-                String data = (String) params.get("data");
-                invitationService.refuseInvitation(inviterID, data, listener);
-            }
-            break;
-            case "acceptInvitation": {
-                String inviterID = (String) params.get("inviterID");
-                String data = (String) params.get("data");
-                invitationService.acceptInvitation(inviterID, data, listener);
-            }
-            break;
-            case "setUsersInRoomAttributes": {
-                String key = (String) params.get("key");
-                String value = (String) params.get("value");
-                List<String> userIDs = (List<String>) params.get("userIDs");
-                userInRoomAttributesPluginService.setUsersInRoomAttributes(key, value, userIDs, listener);
-            }
-            break;
-            case "queryUsersInRoomAttributes": {
-                String nextFlag = (String) params.get("nextFlag");
-                int count = (int) params.get("count");
-                userInRoomAttributesPluginService.queryUsersInRoomAttributesList(nextFlag, count, listener);
-            }
-            break;
-            case "joinRoom": {
-                String roomID = (String) params.get("roomID");
-                userInRoomAttributesPluginService.joinRoom(roomID, listener);
-            }
-            break;
-            case "leaveRoom": {
-                userInRoomAttributesPluginService.leaveRoom(listener);
-            }
-            break;
-            case "updateRoomProperty": {
-                String key = (String) params.get("key");
-                String value = (String) params.get("value");
-                boolean isDeleteAfterOwnerLeft = (boolean) params.get("isDeleteAfterOwnerLeft");
-                boolean isForce = (boolean) params.get("isForce");
-                boolean isUpdateOwner = (boolean) params.get("isUpdateOwner");
+    public void registerPluginEventHandler(ZegoSignalingPluginEventHandler handler) {
+        service.registerPluginEventHandler(handler);
+    }
 
-                HashMap<String, String> roomAttributes = new HashMap<>();
-                roomAttributes.put(key, value);
-                ZIMRoomAttributesSetConfig config = new ZIMRoomAttributesSetConfig();
-                config.isDeleteAfterOwnerLeft = isDeleteAfterOwnerLeft;
-                config.isForce = isForce;
-                config.isUpdateOwner = isUpdateOwner;
-                roomPropertiesPluginService.updateRoomProperty(roomAttributes, config, listener);
-            }
-            break;
-            case "deleteRoomProperties": {
-                List<String> keys = (List<String>) params.get("keys");
-                boolean isForce = (boolean) params.get("isForce");
-                ZIMRoomAttributesDeleteConfig config = new ZIMRoomAttributesDeleteConfig();
-                config.isForce = isForce;
-                roomPropertiesPluginService.deleteRoomProperties(keys, config, listener);
-            }
-            break;
-            case "beginRoomPropertiesBatchOperation": {
-                boolean isDeleteAfterOwnerLeft = (boolean) params.get("isDeleteAfterOwnerLeft");
-                boolean isForce = (boolean) params.get("isForce");
-                boolean isUpdateOwner = (boolean) params.get("isUpdateOwner");
-                ZIMRoomAttributesBatchOperationConfig config = new ZIMRoomAttributesBatchOperationConfig();
-                config.isDeleteAfterOwnerLeft = isDeleteAfterOwnerLeft;
-                config.isForce = isForce;
-                config.isUpdateOwner = isUpdateOwner;
-                roomPropertiesPluginService.beginRoomPropertiesBatchOperation(config, listener);
-            }
-            break;
-            case "endRoomPropertiesBatchOperation": {
-                roomPropertiesPluginService.endRoomPropertiesBatchOperation(listener);
-            }
-            break;
-            case "queryRoomProperties": {
-                roomPropertiesPluginService.queryRoomProperties(listener);
-            }
-            break;
-        }
+
+    public void registerZIMEventHandler(ZIMEventHandler handler) {
+        service.registerZIMEventHandler(handler);
     }
 
     @Override
-    public void registerPluginEventHandler(PluginEventListener listener) {
-        pluginEventListener = listener;
-        invitationService.setPluginEventListener(listener);
-        userInRoomAttributesPluginService.setPluginEventListener(listener);
-        roomPropertiesPluginService.setPluginEventListener(listener);
+    public void enableNotifyWhenAppRunningInBackgroundOrQuit(boolean enable) {
+        service.enableNotifyWhenAppRunningInBackgroundOrQuit(enable);
     }
 
-    ZIMUserInfo getZimUserInfo() {
-        return currentZIMUserInfo;
-    }
-
-    @Override
-    public void enableNotifyWhenAppRunningInBackgroundOrQuit(boolean enable){
-        this.notifyWhenAppRunningInBackgroundOrQuit = enable;
-        try {
-            if(enable){
-                ZPNsManager.enableDebug(BuildConfig.DEBUG);
-                ZPNsConfig zpnsConfig = new ZPNsConfig();
-                zpnsConfig.enableFCMPush(); // FCM
-                ZPNsManager.setPushConfig(zpnsConfig);
-                ZPNsManager.getInstance().registerPush(application);
-            }else {
-                ZPNsManager.getInstance().unregisterPush();
-            }
-        }catch (Exception e){
-            e.printStackTrace();
-        }
-    }
 }

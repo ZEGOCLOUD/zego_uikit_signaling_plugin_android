@@ -1,7 +1,6 @@
 package com.zegocloud.uikit.plugin.signaling;
 
 import android.content.Context;
-
 import im.zego.zpns.ZPNsMessageReceiver;
 import im.zego.zpns.entity.ZPNsMessage;
 import im.zego.zpns.entity.ZPNsRegisterMessage;
