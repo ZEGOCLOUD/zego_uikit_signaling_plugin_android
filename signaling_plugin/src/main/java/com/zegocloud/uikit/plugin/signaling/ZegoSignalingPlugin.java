@@ -1,28 +1,27 @@
 package com.zegocloud.uikit.plugin.signaling;
 
 import android.app.Application;
-import com.zegocloud.uikit.pluin.adapter.plugins.CancelInvitationCallback;
-import com.zegocloud.uikit.pluin.adapter.plugins.ConnectUserCallback;
-import com.zegocloud.uikit.pluin.adapter.plugins.EndRoomBatchOperationCallback;
-import com.zegocloud.uikit.pluin.adapter.plugins.InvitationCallback;
-import com.zegocloud.uikit.pluin.adapter.plugins.QueryRoomPropertyCallback;
-import com.zegocloud.uikit.pluin.adapter.plugins.QueryUsersInRoomAttributesCallback;
-import com.zegocloud.uikit.pluin.adapter.plugins.RenewTokenCallback;
-import com.zegocloud.uikit.pluin.adapter.plugins.ResponseInvitationCallback;
-import com.zegocloud.uikit.pluin.adapter.plugins.RoomCallback;
-import com.zegocloud.uikit.pluin.adapter.plugins.RoomPropertyOperationCallback;
-import com.zegocloud.uikit.pluin.adapter.plugins.SendRoomMessageCallback;
-import com.zegocloud.uikit.pluin.adapter.plugins.SetUsersInRoomAttributesCallback;
-import com.zegocloud.uikit.pluin.adapter.plugins.ZegoPluginType;
-import com.zegocloud.uikit.pluin.adapter.plugins.ZegoSignalingPluginEventHandler;
-import com.zegocloud.uikit.pluin.adapter.plugins.ZegoSignalingPluginNotificationConfig;
-import com.zegocloud.uikit.pluin.adapter.plugins.ZegoSignalingPluginProtocol;
+import com.zegocloud.uikit.plugin.adapter.plugins.CancelInvitationCallback;
+import com.zegocloud.uikit.plugin.adapter.plugins.ConnectUserCallback;
+import com.zegocloud.uikit.plugin.adapter.plugins.EndRoomBatchOperationCallback;
+import com.zegocloud.uikit.plugin.adapter.plugins.InvitationCallback;
+import com.zegocloud.uikit.plugin.adapter.plugins.QueryRoomPropertyCallback;
+import com.zegocloud.uikit.plugin.adapter.plugins.QueryUsersInRoomAttributesCallback;
+import com.zegocloud.uikit.plugin.adapter.plugins.RenewTokenCallback;
+import com.zegocloud.uikit.plugin.adapter.plugins.ResponseInvitationCallback;
+import com.zegocloud.uikit.plugin.adapter.plugins.RoomCallback;
+import com.zegocloud.uikit.plugin.adapter.plugins.RoomPropertyOperationCallback;
+import com.zegocloud.uikit.plugin.adapter.plugins.SendRoomMessageCallback;
+import com.zegocloud.uikit.plugin.adapter.plugins.SetUsersInRoomAttributesCallback;
+import com.zegocloud.uikit.plugin.adapter.plugins.ZegoPluginType;
+import com.zegocloud.uikit.plugin.adapter.plugins.ZegoSignalingPluginEventHandler;
+import com.zegocloud.uikit.plugin.adapter.plugins.ZegoSignalingPluginNotificationConfig;
+import com.zegocloud.uikit.plugin.adapter.plugins.ZegoSignalingPluginProtocol;
 
 import im.zego.zim.callback.ZIMEventHandler;
 
 import java.util.HashMap;
 import java.util.List;
-import java.util.TimerTask;
 
 public class ZegoSignalingPlugin implements ZegoSignalingPluginProtocol {
 
