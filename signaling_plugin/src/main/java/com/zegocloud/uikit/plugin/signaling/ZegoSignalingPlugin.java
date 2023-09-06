@@ -1,22 +1,22 @@
 package com.zegocloud.uikit.plugin.signaling;
 
 import android.app.Application;
-import com.zegocloud.uikit.plugin.adapter.plugins.CancelInvitationCallback;
-import com.zegocloud.uikit.plugin.adapter.plugins.ConnectUserCallback;
-import com.zegocloud.uikit.plugin.adapter.plugins.EndRoomBatchOperationCallback;
-import com.zegocloud.uikit.plugin.adapter.plugins.InvitationCallback;
-import com.zegocloud.uikit.plugin.adapter.plugins.QueryRoomPropertyCallback;
-import com.zegocloud.uikit.plugin.adapter.plugins.QueryUsersInRoomAttributesCallback;
-import com.zegocloud.uikit.plugin.adapter.plugins.RenewTokenCallback;
-import com.zegocloud.uikit.plugin.adapter.plugins.ResponseInvitationCallback;
-import com.zegocloud.uikit.plugin.adapter.plugins.RoomCallback;
-import com.zegocloud.uikit.plugin.adapter.plugins.RoomPropertyOperationCallback;
-import com.zegocloud.uikit.plugin.adapter.plugins.SendRoomMessageCallback;
-import com.zegocloud.uikit.plugin.adapter.plugins.SetUsersInRoomAttributesCallback;
+import com.zegocloud.uikit.plugin.adapter.plugins.signaling.CancelInvitationCallback;
+import com.zegocloud.uikit.plugin.adapter.plugins.signaling.ConnectUserCallback;
+import com.zegocloud.uikit.plugin.adapter.plugins.signaling.EndRoomBatchOperationCallback;
+import com.zegocloud.uikit.plugin.adapter.plugins.signaling.InvitationCallback;
+import com.zegocloud.uikit.plugin.adapter.plugins.signaling.QueryRoomPropertyCallback;
+import com.zegocloud.uikit.plugin.adapter.plugins.signaling.QueryUsersInRoomAttributesCallback;
+import com.zegocloud.uikit.plugin.adapter.plugins.signaling.RenewTokenCallback;
+import com.zegocloud.uikit.plugin.adapter.plugins.signaling.ResponseInvitationCallback;
+import com.zegocloud.uikit.plugin.adapter.plugins.signaling.RoomCallback;
+import com.zegocloud.uikit.plugin.adapter.plugins.signaling.RoomPropertyOperationCallback;
+import com.zegocloud.uikit.plugin.adapter.plugins.signaling.SendRoomMessageCallback;
+import com.zegocloud.uikit.plugin.adapter.plugins.signaling.SetUsersInRoomAttributesCallback;
 import com.zegocloud.uikit.plugin.adapter.plugins.ZegoPluginType;
-import com.zegocloud.uikit.plugin.adapter.plugins.ZegoSignalingPluginEventHandler;
-import com.zegocloud.uikit.plugin.adapter.plugins.ZegoSignalingPluginNotificationConfig;
-import com.zegocloud.uikit.plugin.adapter.plugins.ZegoSignalingPluginProtocol;
+import com.zegocloud.uikit.plugin.adapter.plugins.signaling.ZegoSignalingPluginEventHandler;
+import com.zegocloud.uikit.plugin.adapter.plugins.signaling.ZegoSignalingPluginNotificationConfig;
+import com.zegocloud.uikit.plugin.adapter.plugins.signaling.ZegoSignalingPluginProtocol;
 
 import im.zego.zim.callback.ZIMEventHandler;
 
