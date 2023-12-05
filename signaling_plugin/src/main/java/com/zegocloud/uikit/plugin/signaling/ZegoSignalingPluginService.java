@@ -1,6 +1,7 @@
 package com.zegocloud.uikit.plugin.signaling;
 
 import android.app.Application;
+import android.util.Log;
 import com.zegocloud.uikit.plugin.adapter.plugins.signaling.CancelInvitationCallback;
 import com.zegocloud.uikit.plugin.adapter.plugins.signaling.ConnectUserCallback;
 import com.zegocloud.uikit.plugin.adapter.plugins.signaling.EndRoomBatchOperationCallback;
@@ -40,20 +41,29 @@ import im.zego.zim.entity.ZIMCallAcceptConfig;
 import im.zego.zim.entity.ZIMCallCancelConfig;
 import im.zego.zim.entity.ZIMCallInvitationAcceptedInfo;
 import im.zego.zim.entity.ZIMCallInvitationCancelledInfo;
+import im.zego.zim.entity.ZIMCallInvitationEndedInfo;
 import im.zego.zim.entity.ZIMCallInvitationReceivedInfo;
 import im.zego.zim.entity.ZIMCallInvitationRejectedInfo;
 import im.zego.zim.entity.ZIMCallInvitationSentInfo;
+import im.zego.zim.entity.ZIMCallInvitationTimeoutInfo;
 import im.zego.zim.entity.ZIMCallInviteConfig;
 import im.zego.zim.entity.ZIMCallRejectConfig;
+import im.zego.zim.entity.ZIMCallUserStateChangeInfo;
 import im.zego.zim.entity.ZIMConversationChangeInfo;
+import im.zego.zim.entity.ZIMConversationsAllDeletedInfo;
 import im.zego.zim.entity.ZIMError;
 import im.zego.zim.entity.ZIMGroupAttributesUpdateInfo;
 import im.zego.zim.entity.ZIMGroupFullInfo;
 import im.zego.zim.entity.ZIMGroupMemberInfo;
 import im.zego.zim.entity.ZIMGroupOperatedInfo;
 import im.zego.zim.entity.ZIMMessage;
+import im.zego.zim.entity.ZIMMessageDeletedInfo;
+import im.zego.zim.entity.ZIMMessageReaction;
+import im.zego.zim.entity.ZIMMessageReceiptInfo;
 import im.zego.zim.entity.ZIMMessageSendConfig;
+import im.zego.zim.entity.ZIMMessageSentStatusChangeInfo;
 import im.zego.zim.entity.ZIMPushConfig;
+import im.zego.zim.entity.ZIMRevokeMessage;
 import im.zego.zim.entity.ZIMRoomAdvancedConfig;
 import im.zego.zim.entity.ZIMRoomAttributesBatchOperationConfig;
 import im.zego.zim.entity.ZIMRoomAttributesDeleteConfig;
@@ -68,6 +78,7 @@ import im.zego.zim.entity.ZIMRoomMemberAttributesSetConfig;
 import im.zego.zim.entity.ZIMRoomMemberAttributesUpdateInfo;
 import im.zego.zim.entity.ZIMRoomOperatedInfo;
 import im.zego.zim.entity.ZIMTextMessage;
+import im.zego.zim.entity.ZIMUserFullInfo;
 import im.zego.zim.entity.ZIMUserInfo;
 import im.zego.zim.enums.ZIMConnectionEvent;
 import im.zego.zim.enums.ZIMConnectionState;
@@ -137,7 +148,7 @@ public class ZegoSignalingPluginService {
 
 
             public void onConnectionStateChanged(ZIM zim, ZIMConnectionState state, ZIMConnectionEvent event,
-                                                 JSONObject extendedData) {
+                JSONObject extendedData) {
                 super.onConnectionStateChanged(zim, state, event, extendedData);
                 //                zimConnectionState = state;
                 zimEventHandlerNotifyList.notifyAllListener(handler -> {
@@ -145,7 +156,7 @@ public class ZegoSignalingPluginService {
                 });
                 signalingPluginEventHandlerNotifyList.notifyAllListener(handler -> {
                     ZegoSignalingPluginConnectionState connectionState = ZegoSignalingPluginConnectionState.getConnectionState(
-                            state.value());
+                        state.value());
                     handler.onConnectionStateChanged(connectionState);
                 });
             }
@@ -206,6 +217,103 @@ public class ZegoSignalingPluginService {
                 });
                 signalingPluginEventHandlerNotifyList.notifyAllListener(handler -> {
                     handler.onCallInvitationAccepted(callID, info.invitee, info.extendedData);
+                });
+            }
+
+            @Override
+            public void onBroadcastMessageReceived(ZIM zim, ZIMMessage message) {
+                super.onBroadcastMessageReceived(zim, message);
+                zimEventHandlerNotifyList.notifyAllListener(handler -> {
+                    handler.onBroadcastMessageReceived(zim, message);
+                });
+            }
+
+            @Override
+            public void onCallInvitationEnded(ZIM zim, ZIMCallInvitationEndedInfo info, String callID) {
+                super.onCallInvitationEnded(zim, info, callID);
+                zimEventHandlerNotifyList.notifyAllListener(handler -> {
+                    handler.onCallInvitationEnded(zim, info, callID);
+                });
+            }
+
+            @Override
+            public void onCallInvitationTimeout(ZIM zim, ZIMCallInvitationTimeoutInfo info, String callID) {
+                super.onCallInvitationTimeout(zim, info, callID);
+                zimEventHandlerNotifyList.notifyAllListener(handler -> {
+                    handler.onCallInvitationTimeout(zim, info, callID);
+                });
+            }
+
+            @Override
+            public void onCallUserStateChanged(ZIM zim, ZIMCallUserStateChangeInfo info, String callID) {
+                super.onCallUserStateChanged(zim, info, callID);
+                zimEventHandlerNotifyList.notifyAllListener(handler -> {
+                    handler.onCallUserStateChanged(zim, info, callID);
+                });
+            }
+
+            @Override
+            public void onMessageDeleted(ZIM zim, ZIMMessageDeletedInfo deletedInfo) {
+                super.onMessageDeleted(zim, deletedInfo);
+                zimEventHandlerNotifyList.notifyAllListener(handler -> {
+                    handler.onMessageDeleted(zim, deletedInfo);
+                });
+            }
+
+            @Override
+            public void onUserInfoUpdated(ZIM zim, ZIMUserFullInfo info) {
+                super.onUserInfoUpdated(zim, info);
+                zimEventHandlerNotifyList.notifyAllListener(handler -> {
+                    handler.onUserInfoUpdated(zim, info);
+                });
+            }
+
+            @Override
+            public void onMessageSentStatusChanged(ZIM zim,
+                ArrayList<ZIMMessageSentStatusChangeInfo> messageSentStatusChangeInfoList) {
+                super.onMessageSentStatusChanged(zim, messageSentStatusChangeInfoList);
+                zimEventHandlerNotifyList.notifyAllListener(handler -> {
+                    handler.onMessageSentStatusChanged(zim, messageSentStatusChangeInfoList);
+                });
+            }
+
+            @Override
+            public void onConversationMessageReceiptChanged(ZIM zim, ArrayList<ZIMMessageReceiptInfo> infos) {
+                super.onConversationMessageReceiptChanged(zim, infos);
+                zimEventHandlerNotifyList.notifyAllListener(handler -> {
+                    handler.onConversationMessageReceiptChanged(zim, infos);
+                });
+            }
+
+            @Override
+            public void onConversationsAllDeleted(ZIM zim, ZIMConversationsAllDeletedInfo info) {
+                super.onConversationsAllDeleted(zim, info);
+                zimEventHandlerNotifyList.notifyAllListener(handler -> {
+                    handler.onConversationsAllDeleted(zim, info);
+                });
+            }
+
+            @Override
+            public void onMessageReactionsChanged(ZIM zim, ArrayList<ZIMMessageReaction> reactions) {
+                super.onMessageReactionsChanged(zim, reactions);
+                zimEventHandlerNotifyList.notifyAllListener(handler -> {
+                    handler.onMessageReactionsChanged(zim, reactions);
+                });
+            }
+
+            @Override
+            public void onMessageReceiptChanged(ZIM zim, ArrayList<ZIMMessageReceiptInfo> infos) {
+                super.onMessageReceiptChanged(zim, infos);
+                zimEventHandlerNotifyList.notifyAllListener(handler -> {
+                    handler.onMessageReceiptChanged(zim, infos);
+                });
+            }
+
+            @Override
+            public void onMessageRevokeReceived(ZIM zim, ArrayList<ZIMRevokeMessage> messageList) {
+                super.onMessageRevokeReceived(zim, messageList);
+                zimEventHandlerNotifyList.notifyAllListener(handler -> {
+                    handler.onMessageRevokeReceived(zim, messageList);
                 });
             }
 
@@ -271,7 +379,7 @@ public class ZegoSignalingPluginService {
             }
 
             public void onRoomMemberAttributesUpdated(ZIM zim, ArrayList<ZIMRoomMemberAttributesUpdateInfo> infos,
-                                                      ZIMRoomOperatedInfo operatedInfo, String roomID) {
+                ZIMRoomOperatedInfo operatedInfo, String roomID) {
                 super.onRoomMemberAttributesUpdated(zim, infos, operatedInfo, roomID);
                 zimEventHandlerNotifyList.notifyAllListener(handler -> {
                     handler.onRoomMemberAttributesUpdated(zim, infos, operatedInfo, roomID);
@@ -310,7 +418,7 @@ public class ZegoSignalingPluginService {
             }
 
             public void onRoomAttributesBatchUpdated(ZIM zim, ArrayList<ZIMRoomAttributesUpdateInfo> infos,
-                                                     String roomID) {
+                String roomID) {
                 super.onRoomAttributesBatchUpdated(zim, infos, roomID);
                 zimEventHandlerNotifyList.notifyAllListener(handler -> {
                     handler.onRoomAttributesBatchUpdated(zim, infos, roomID);
@@ -364,7 +472,7 @@ public class ZegoSignalingPluginService {
 
             @Override
             public void onRoomStateChanged(ZIM zim, ZIMRoomState state, ZIMRoomEvent event, JSONObject extendedData,
-                                           String roomID) {
+                String roomID) {
                 super.onRoomStateChanged(zim, state, event, extendedData, roomID);
                 zimEventHandlerNotifyList.notifyAllListener(handler -> {
                     handler.onRoomStateChanged(zim, state, event, extendedData, roomID);
@@ -373,7 +481,7 @@ public class ZegoSignalingPluginService {
 
             @Override
             public void onConversationChanged(ZIM zim,
-                                              ArrayList<ZIMConversationChangeInfo> conversationChangeInfoList) {
+                ArrayList<ZIMConversationChangeInfo> conversationChangeInfoList) {
                 super.onConversationChanged(zim, conversationChangeInfoList);
                 zimEventHandlerNotifyList.notifyAllListener(handler -> {
                     handler.onConversationChanged(zim, conversationChangeInfoList);
@@ -390,7 +498,7 @@ public class ZegoSignalingPluginService {
 
             @Override
             public void onGroupAttributesUpdated(ZIM zim, ArrayList<ZIMGroupAttributesUpdateInfo> infos,
-                                                 ZIMGroupOperatedInfo operatedInfo, String groupID) {
+                ZIMGroupOperatedInfo operatedInfo, String groupID) {
                 super.onGroupAttributesUpdated(zim, infos, operatedInfo, groupID);
                 zimEventHandlerNotifyList.notifyAllListener(handler -> {
                     handler.onGroupAttributesUpdated(zim, infos, operatedInfo, groupID);
@@ -399,7 +507,7 @@ public class ZegoSignalingPluginService {
 
             @Override
             public void onGroupAvatarUrlUpdated(ZIM zim, String groupAvatarUrl, ZIMGroupOperatedInfo operatedInfo,
-                                                String groupID) {
+                String groupID) {
                 super.onGroupAvatarUrlUpdated(zim, groupAvatarUrl, operatedInfo, groupID);
                 zimEventHandlerNotifyList.notifyAllListener(handler -> {
                     handler.onGroupAvatarUrlUpdated(zim, groupAvatarUrl, operatedInfo, groupID);
@@ -408,7 +516,7 @@ public class ZegoSignalingPluginService {
 
             @Override
             public void onGroupMemberInfoUpdated(ZIM zim, ArrayList<ZIMGroupMemberInfo> userList,
-                                                 ZIMGroupOperatedInfo operatedInfo, String groupID) {
+                ZIMGroupOperatedInfo operatedInfo, String groupID) {
                 super.onGroupMemberInfoUpdated(zim, userList, operatedInfo, groupID);
                 zimEventHandlerNotifyList.notifyAllListener(handler -> {
                     handler.onGroupMemberInfoUpdated(zim, userList, operatedInfo, groupID);
@@ -417,7 +525,7 @@ public class ZegoSignalingPluginService {
 
             @Override
             public void onGroupMemberStateChanged(ZIM zim, ZIMGroupMemberState state, ZIMGroupMemberEvent event,
-                                                  ArrayList<ZIMGroupMemberInfo> userList, ZIMGroupOperatedInfo operatedInfo, String groupID) {
+                ArrayList<ZIMGroupMemberInfo> userList, ZIMGroupOperatedInfo operatedInfo, String groupID) {
                 super.onGroupMemberStateChanged(zim, state, event, userList, operatedInfo, groupID);
                 zimEventHandlerNotifyList.notifyAllListener(handler -> {
                     handler.onGroupMemberStateChanged(zim, state, event, userList, operatedInfo, groupID);
@@ -426,7 +534,7 @@ public class ZegoSignalingPluginService {
 
             @Override
             public void onGroupNameUpdated(ZIM zim, String groupName, ZIMGroupOperatedInfo operatedInfo,
-                                           String groupID) {
+                String groupID) {
                 super.onGroupNameUpdated(zim, groupName, operatedInfo, groupID);
                 zimEventHandlerNotifyList.notifyAllListener(handler -> {
                     handler.onGroupNameUpdated(zim, groupName, operatedInfo, groupID);
@@ -435,7 +543,7 @@ public class ZegoSignalingPluginService {
 
             @Override
             public void onGroupNoticeUpdated(ZIM zim, String groupNotice, ZIMGroupOperatedInfo operatedInfo,
-                                             String groupID) {
+                String groupID) {
                 super.onGroupNoticeUpdated(zim, groupNotice, operatedInfo, groupID);
                 zimEventHandlerNotifyList.notifyAllListener(handler -> {
                     handler.onGroupNoticeUpdated(zim, groupNotice, operatedInfo, groupID);
@@ -444,7 +552,7 @@ public class ZegoSignalingPluginService {
 
             @Override
             public void onGroupStateChanged(ZIM zim, ZIMGroupState state, ZIMGroupEvent event,
-                                            ZIMGroupOperatedInfo operatedInfo, ZIMGroupFullInfo groupInfo) {
+                ZIMGroupOperatedInfo operatedInfo, ZIMGroupFullInfo groupInfo) {
                 super.onGroupStateChanged(zim, state, event, operatedInfo, groupInfo);
                 zimEventHandlerNotifyList.notifyAllListener(handler -> {
                     handler.onGroupStateChanged(zim, state, event, operatedInfo, groupInfo);
@@ -474,7 +582,6 @@ public class ZegoSignalingPluginService {
         connectUser(userID, userName, null, callback);
     }
 
-
     public void connectUser(String userID, String userName, String token, ConnectUserCallback callback) {
         ZIMUserInfo zimUserInfo = new ZIMUserInfo();
         zimUserInfo.userID = userID;
@@ -489,7 +596,8 @@ public class ZegoSignalingPluginService {
 
             public void onLoggedIn(ZIMError errorInfo) {
                 if (callback != null) {
-                    int code = errorInfo.code == ZIMErrorCode.USER_HAS_ALREADY_LOGGED ? ZIMErrorCode.SUCCESS.value() : errorInfo.code.value();
+                    int code = errorInfo.code == ZIMErrorCode.USER_HAS_ALREADY_LOGGED ? ZIMErrorCode.SUCCESS.value()
+                        : errorInfo.code.value();
                     callback.onResult(code, errorInfo.message);
                 }
             }
@@ -521,7 +629,7 @@ public class ZegoSignalingPluginService {
 
 
     public void sendInvitation(List<String> invitees, int timeout, String data,
-                               ZegoSignalingPluginNotificationConfig notificationConfig, InvitationCallback callback) {
+        ZegoSignalingPluginNotificationConfig notificationConfig, InvitationCallback callback) {
         ZIMCallInviteConfig config = new ZIMCallInviteConfig();
         config.timeout = timeout;
         config.extendedData = data;
@@ -541,7 +649,7 @@ public class ZegoSignalingPluginService {
             public void onCallInvitationSent(String callID, ZIMCallInvitationSentInfo info, ZIMError errorInfo) {
                 if (callback != null) {
                     List<String> stringList = GenericUtils.map(info.errorInvitees,
-                            zimCallUserInfo -> zimCallUserInfo.userID);
+                        zimCallUserInfo -> zimCallUserInfo.userID);
                     callback.onResult(errorInfo.code.value(), errorInfo.message, callID, stringList);
                 }
             }
@@ -550,9 +658,17 @@ public class ZegoSignalingPluginService {
 
 
     public void cancelInvitation(List<String> invitees, String invitationID, String data,
-                                 CancelInvitationCallback callback) {
+        ZegoSignalingPluginNotificationConfig notificationConfig, CancelInvitationCallback callback) {
         ZIMCallCancelConfig config = new ZIMCallCancelConfig();
         config.extendedData = data;
+        ZIMPushConfig pushConfig = new ZIMPushConfig();
+        if (notifyWhenAppRunningInBackgroundOrQuit && notificationConfig != null) {
+            pushConfig.payload = data;
+            pushConfig.title = notificationConfig.getTitle();
+            pushConfig.content = notificationConfig.getMessage();
+            pushConfig.resourcesID = notificationConfig.getResourceID();
+            config.pushConfig = pushConfig;
+        }
         if (ZIM.getInstance() == null) {
             return;
         }
@@ -639,36 +755,45 @@ public class ZegoSignalingPluginService {
         });
     }
 
+    public void destroy() {
+        if (ZIM.getInstance() == null) {
+            return;
+        }
+        ZIM.getInstance().destroy();
+        isZIMInited.set(false);
+        zimEventHandlerNotifyList.clear();
+        signalingPluginEventHandlerNotifyList.clear();
+    }
 
     public void setUsersInRoomAttributes(HashMap<String, String> attributes, List<String> userIDs, String roomID,
-                                         SetUsersInRoomAttributesCallback callback) {
+        SetUsersInRoomAttributesCallback callback) {
         ZIMRoomMemberAttributesSetConfig config = new ZIMRoomMemberAttributesSetConfig();
         if (ZIM.getInstance() == null) {
             return;
         }
         ZIM.getInstance().setRoomMembersAttributes(attributes, userIDs, roomID, config,
-                new ZIMRoomMembersAttributesOperatedCallback() {
+            new ZIMRoomMembersAttributesOperatedCallback() {
 
-                    public void onRoomMembersAttributesOperated(String roomID,
-                                                                ArrayList<ZIMRoomMemberAttributesOperatedInfo> infos, ArrayList<String> errorUserList,
-                                                                ZIMError errorInfo) {
-                        if (callback != null) {
-                            Map<String, HashMap<String, String>> attributesMap = new HashMap<>();
-                            Map<String, ArrayList<String>> errorKeysMap = new HashMap<>();
-                            for (ZIMRoomMemberAttributesOperatedInfo info : infos) {
-                                attributesMap.put(info.attributesInfo.userID, info.attributesInfo.attributes);
-                                errorKeysMap.put(info.attributesInfo.userID, info.errorKeys);
-                            }
-                            callback.onResult(errorInfo.code.value(), errorInfo.message, errorUserList, attributesMap,
-                                    errorKeysMap);
+                public void onRoomMembersAttributesOperated(String roomID,
+                    ArrayList<ZIMRoomMemberAttributesOperatedInfo> infos, ArrayList<String> errorUserList,
+                    ZIMError errorInfo) {
+                    if (callback != null) {
+                        Map<String, HashMap<String, String>> attributesMap = new HashMap<>();
+                        Map<String, ArrayList<String>> errorKeysMap = new HashMap<>();
+                        for (ZIMRoomMemberAttributesOperatedInfo info : infos) {
+                            attributesMap.put(info.attributesInfo.userID, info.attributesInfo.attributes);
+                            errorKeysMap.put(info.attributesInfo.userID, info.errorKeys);
                         }
+                        callback.onResult(errorInfo.code.value(), errorInfo.message, errorUserList, attributesMap,
+                            errorKeysMap);
                     }
-                });
+                }
+            });
     }
 
 
     public void queryUsersInRoomAttributes(String roomID, int count, String nextFlag,
-                                           QueryUsersInRoomAttributesCallback callback) {
+        QueryUsersInRoomAttributesCallback callback) {
         ZIMRoomMemberAttributesQueryConfig config = new ZIMRoomMemberAttributesQueryConfig();
         config.count = count;
         config.nextFlag = nextFlag;
@@ -676,24 +801,24 @@ public class ZegoSignalingPluginService {
             return;
         }
         ZIM.getInstance()
-                .queryRoomMemberAttributesList(roomID, config, new ZIMRoomMemberAttributesListQueriedCallback() {
+            .queryRoomMemberAttributesList(roomID, config, new ZIMRoomMemberAttributesListQueriedCallback() {
 
-                    public void onRoomMemberAttributesListQueried(String roomID,
-                                                                  ArrayList<ZIMRoomMemberAttributesInfo> infos, String nextFlag, ZIMError errorInfo) {
-                        if (callback != null) {
-                            Map<String, HashMap<String, String>> attributesMap = new HashMap<>();
-                            for (ZIMRoomMemberAttributesInfo info : infos) {
-                                attributesMap.put(info.userID, info.attributes);
-                            }
-                            callback.onResult(errorInfo.code.value(), errorInfo.message, nextFlag, attributesMap);
+                public void onRoomMemberAttributesListQueried(String roomID,
+                    ArrayList<ZIMRoomMemberAttributesInfo> infos, String nextFlag, ZIMError errorInfo) {
+                    if (callback != null) {
+                        Map<String, HashMap<String, String>> attributesMap = new HashMap<>();
+                        for (ZIMRoomMemberAttributesInfo info : infos) {
+                            attributesMap.put(info.userID, info.attributes);
                         }
+                        callback.onResult(errorInfo.code.value(), errorInfo.message, nextFlag, attributesMap);
                     }
-                });
+                }
+            });
     }
 
 
     public void updateRoomProperty(HashMap<String, String> attributes, String roomID, boolean isForce,
-                                   boolean isDeleteAfterOwnerLeft, boolean isUpdateOwner, RoomPropertyOperationCallback callback) {
+        boolean isDeleteAfterOwnerLeft, boolean isUpdateOwner, RoomPropertyOperationCallback callback) {
         ZIMRoomAttributesSetConfig config = new ZIMRoomAttributesSetConfig();
         config.isDeleteAfterOwnerLeft = isDeleteAfterOwnerLeft;
         config.isForce = isForce;
@@ -713,7 +838,7 @@ public class ZegoSignalingPluginService {
 
 
     public void deleteRoomProperties(List<String> keys, String roomID, boolean isForce,
-                                     RoomPropertyOperationCallback callback) {
+        RoomPropertyOperationCallback callback) {
         ZIMRoomAttributesDeleteConfig config = new ZIMRoomAttributesDeleteConfig();
         config.isForce = isForce;
         if (ZIM.getInstance() == null) {
@@ -737,7 +862,7 @@ public class ZegoSignalingPluginService {
         ZIM.getInstance().queryRoomAllAttributes(roomID, new ZIMRoomAttributesQueriedCallback() {
 
             public void onRoomAttributesQueried(String roomID, HashMap<String, String> roomAttributes,
-                                                ZIMError errorInfo) {
+                ZIMError errorInfo) {
                 if (callback != null) {
                     callback.onResult(errorInfo.code.value(), errorInfo.message, roomAttributes);
                 }
@@ -747,7 +872,7 @@ public class ZegoSignalingPluginService {
 
 
     public void beginRoomPropertiesBatchOperation(String roomID, boolean isDeleteAfterOwnerLeft, boolean isForce,
-                                                  boolean isUpdateOwner) {
+        boolean isUpdateOwner) {
         ZIMRoomAttributesBatchOperationConfig config = new ZIMRoomAttributesBatchOperationConfig();
         config.isForce = isForce;
         config.isDeleteAfterOwnerLeft = isDeleteAfterOwnerLeft;
@@ -781,19 +906,19 @@ public class ZegoSignalingPluginService {
         ZIMTextMessage textMessage = new ZIMTextMessage(text);
         ZIMMessageSendConfig config = new ZIMMessageSendConfig();
         ZIM.getInstance()
-                .sendMessage(textMessage, roomID, ZIMConversationType.ROOM, config, new ZIMMessageSentCallback() {
-                    @Override
-                    public void onMessageAttached(ZIMMessage message) {
+            .sendMessage(textMessage, roomID, ZIMConversationType.ROOM, config, new ZIMMessageSentCallback() {
+                @Override
+                public void onMessageAttached(ZIMMessage message) {
 
-                    }
+                }
 
-                    @Override
-                    public void onMessageSent(ZIMMessage message, ZIMError errorInfo) {
-                        if (callback != null) {
-                            callback.onResult(errorInfo.code.value(), errorInfo.message);
-                        }
+                @Override
+                public void onMessageSent(ZIMMessage message, ZIMError errorInfo) {
+                    if (callback != null) {
+                        callback.onResult(errorInfo.code.value(), errorInfo.message);
                     }
-                });
+                }
+            });
     }
 
     public void registerPluginEventHandler(ZegoSignalingPluginEventHandler handler) {

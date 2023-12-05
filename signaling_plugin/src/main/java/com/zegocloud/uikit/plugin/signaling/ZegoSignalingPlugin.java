@@ -1,6 +1,7 @@
 package com.zegocloud.uikit.plugin.signaling;
 
 import android.app.Application;
+import com.zegocloud.uikit.plugin.adapter.plugins.ZegoPluginType;
 import com.zegocloud.uikit.plugin.adapter.plugins.signaling.CancelInvitationCallback;
 import com.zegocloud.uikit.plugin.adapter.plugins.signaling.ConnectUserCallback;
 import com.zegocloud.uikit.plugin.adapter.plugins.signaling.EndRoomBatchOperationCallback;
@@ -13,13 +14,10 @@ import com.zegocloud.uikit.plugin.adapter.plugins.signaling.RoomCallback;
 import com.zegocloud.uikit.plugin.adapter.plugins.signaling.RoomPropertyOperationCallback;
 import com.zegocloud.uikit.plugin.adapter.plugins.signaling.SendRoomMessageCallback;
 import com.zegocloud.uikit.plugin.adapter.plugins.signaling.SetUsersInRoomAttributesCallback;
-import com.zegocloud.uikit.plugin.adapter.plugins.ZegoPluginType;
 import com.zegocloud.uikit.plugin.adapter.plugins.signaling.ZegoSignalingPluginEventHandler;
 import com.zegocloud.uikit.plugin.adapter.plugins.signaling.ZegoSignalingPluginNotificationConfig;
 import com.zegocloud.uikit.plugin.adapter.plugins.signaling.ZegoSignalingPluginProtocol;
-
 import im.zego.zim.callback.ZIMEventHandler;
-
 import java.util.HashMap;
 import java.util.List;
 
@@ -67,14 +65,20 @@ public class ZegoSignalingPlugin implements ZegoSignalingPluginProtocol {
     }
 
     @Override
-    public void sendInvitation(List<String> invitees, int timeout, String data, ZegoSignalingPluginNotificationConfig notificationConfig, InvitationCallback callback) {
+    public void destroy() {
+        service.destroy();
+    }
+
+    @Override
+    public void sendInvitation(List<String> invitees, int timeout, String data,
+        ZegoSignalingPluginNotificationConfig notificationConfig, InvitationCallback callback) {
         service.sendInvitation(invitees, timeout, data, notificationConfig, callback);
     }
 
     @Override
     public void cancelInvitation(List<String> invitees, String invitationID, String data,
-                                 CancelInvitationCallback callback) {
-        service.cancelInvitation(invitees, invitationID, data, callback);
+        ZegoSignalingPluginNotificationConfig pushConfig, CancelInvitationCallback callback) {
+        service.cancelInvitation(invitees, invitationID, data, pushConfig, callback);
     }
 
     @Override
@@ -104,25 +108,25 @@ public class ZegoSignalingPlugin implements ZegoSignalingPluginProtocol {
 
     @Override
     public void setUsersInRoomAttributes(HashMap<String, String> attributes, List<String> userIDs, String roomID,
-                                         SetUsersInRoomAttributesCallback callback) {
+        SetUsersInRoomAttributesCallback callback) {
         service.setUsersInRoomAttributes(attributes, userIDs, roomID, callback);
     }
 
     @Override
     public void queryUsersInRoomAttributes(String roomID, int count, String nextFlag,
-                                           QueryUsersInRoomAttributesCallback callback) {
+        QueryUsersInRoomAttributesCallback callback) {
         service.queryUsersInRoomAttributes(roomID, count, nextFlag, callback);
     }
 
     @Override
     public void updateRoomProperty(HashMap<String, String> attributes, String roomID, boolean isForce,
-                                   boolean isDeleteAfterOwnerLeft, boolean isUpdateOwner, RoomPropertyOperationCallback callback) {
+        boolean isDeleteAfterOwnerLeft, boolean isUpdateOwner, RoomPropertyOperationCallback callback) {
         service.updateRoomProperty(attributes, roomID, isForce, isDeleteAfterOwnerLeft, isUpdateOwner, callback);
     }
 
     @Override
     public void deleteRoomProperties(List<String> keys, String roomID, boolean isForce,
-                                     RoomPropertyOperationCallback callback) {
+        RoomPropertyOperationCallback callback) {
         service.deleteRoomProperties(keys, roomID, isForce, callback);
     }
 
@@ -133,7 +137,7 @@ public class ZegoSignalingPlugin implements ZegoSignalingPluginProtocol {
 
     @Override
     public void beginRoomPropertiesBatchOperation(String roomID, boolean isDeleteAfterOwnerLeft, boolean isForce,
-                                                  boolean isUpdateOwner) {
+        boolean isUpdateOwner) {
         service.beginRoomPropertiesBatchOperation(roomID, isDeleteAfterOwnerLeft, isForce, isUpdateOwner);
     }
 
