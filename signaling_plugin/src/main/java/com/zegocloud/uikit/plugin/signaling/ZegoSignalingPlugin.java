@@ -152,6 +152,11 @@ public class ZegoSignalingPlugin implements ZegoSignalingPluginProtocol {
     }
 
     @Override
+    public void sendInRoomCommandMessage(String command, String roomID, SendRoomMessageCallback callback) {
+        service.sendInRoomCommandMessage(command, roomID, callback);
+    }
+
+    @Override
     public ZegoPluginType getPluginType() {
         return ZegoPluginType.SIGNALING;
     }

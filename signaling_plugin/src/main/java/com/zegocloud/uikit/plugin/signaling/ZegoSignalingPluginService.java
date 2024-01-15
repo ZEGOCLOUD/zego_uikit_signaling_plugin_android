@@ -1,7 +1,6 @@
 package com.zegocloud.uikit.plugin.signaling;
 
 import android.app.Application;
-import android.util.Log;
 import com.zegocloud.uikit.plugin.adapter.plugins.signaling.CancelInvitationCallback;
 import com.zegocloud.uikit.plugin.adapter.plugins.signaling.ConnectUserCallback;
 import com.zegocloud.uikit.plugin.adapter.plugins.signaling.EndRoomBatchOperationCallback;
@@ -14,6 +13,7 @@ import com.zegocloud.uikit.plugin.adapter.plugins.signaling.RoomCallback;
 import com.zegocloud.uikit.plugin.adapter.plugins.signaling.RoomPropertyOperationCallback;
 import com.zegocloud.uikit.plugin.adapter.plugins.signaling.SendRoomMessageCallback;
 import com.zegocloud.uikit.plugin.adapter.plugins.signaling.SetUsersInRoomAttributesCallback;
+import com.zegocloud.uikit.plugin.adapter.plugins.signaling.ZegoSignalingInRoomCommandMessage;
 import com.zegocloud.uikit.plugin.adapter.plugins.signaling.ZegoSignalingInRoomTextMessage;
 import com.zegocloud.uikit.plugin.adapter.plugins.signaling.ZegoSignalingPluginConnectionState;
 import com.zegocloud.uikit.plugin.adapter.plugins.signaling.ZegoSignalingPluginEventHandler;
@@ -49,6 +49,7 @@ import im.zego.zim.entity.ZIMCallInvitationTimeoutInfo;
 import im.zego.zim.entity.ZIMCallInviteConfig;
 import im.zego.zim.entity.ZIMCallRejectConfig;
 import im.zego.zim.entity.ZIMCallUserStateChangeInfo;
+import im.zego.zim.entity.ZIMCommandMessage;
 import im.zego.zim.entity.ZIMConversationChangeInfo;
 import im.zego.zim.entity.ZIMConversationsAllDeletedInfo;
 import im.zego.zim.entity.ZIMError;
@@ -93,6 +94,7 @@ import im.zego.zim.enums.ZIMRoomEvent;
 import im.zego.zim.enums.ZIMRoomState;
 import im.zego.zpns.ZPNsManager;
 import im.zego.zpns.util.ZPNsConfig;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -451,7 +453,10 @@ public class ZegoSignalingPluginService {
                     }
                 });
 
-                List<ZegoSignalingInRoomTextMessage> signalMessageList = GenericUtils.map(messageList, zimMessage -> {
+                List<ZegoSignalingInRoomTextMessage> signalMessageList = new ArrayList<>();
+                List<ZegoSignalingInRoomCommandMessage> signalCommandMessageList = new ArrayList<>();
+
+                for (ZIMMessage zimMessage : messageList) {
                     if (zimMessage instanceof ZIMTextMessage) {
                         ZIMTextMessage textMessage = (ZIMTextMessage) zimMessage;
                         ZegoSignalingInRoomTextMessage message = new ZegoSignalingInRoomTextMessage();
@@ -460,14 +465,26 @@ public class ZegoSignalingPluginService {
                         message.orderKey = textMessage.getOrderKey();
                         message.text = textMessage.message;
                         message.senderUserID = textMessage.getSenderUserID();
-                        return message;
-                    } else {
-                        return null;
+                        signalMessageList.add(message);
+                        signalingPluginEventHandlerNotifyList.notifyAllListener(handler -> {
+                            handler.onInRoomTextMessageReceived(signalMessageList, fromRoomID);
+                        });
+                    } else if (zimMessage instanceof ZIMCommandMessage) {
+                        ZIMCommandMessage commandMessage = (ZIMCommandMessage) zimMessage;
+                        String messageText = new String(commandMessage.message, StandardCharsets.UTF_8);
+                        ZegoSignalingInRoomCommandMessage message = new ZegoSignalingInRoomCommandMessage();
+                        message.messageID = commandMessage.getMessageID();
+                        message.timestamp = commandMessage.getTimestamp();
+                        message.orderKey = commandMessage.getOrderKey();
+                        message.text = messageText;
+                        message.senderUserID = commandMessage.getSenderUserID();
+                        signalCommandMessageList.add(message);
+
+                        signalingPluginEventHandlerNotifyList.notifyAllListener(handler -> {
+                            handler.onInRoomCommandMessageReceived(signalCommandMessageList, fromRoomID);
+                        });
                     }
-                });
-                signalingPluginEventHandlerNotifyList.notifyAllListener(handler -> {
-                    handler.onInRoomTextMessageReceived(signalMessageList, fromRoomID);
-                });
+                }
             }
 
             @Override
@@ -907,6 +924,28 @@ public class ZegoSignalingPluginService {
         ZIMMessageSendConfig config = new ZIMMessageSendConfig();
         ZIM.getInstance()
             .sendMessage(textMessage, roomID, ZIMConversationType.ROOM, config, new ZIMMessageSentCallback() {
+                @Override
+                public void onMessageAttached(ZIMMessage message) {
+
+                }
+
+                @Override
+                public void onMessageSent(ZIMMessage message, ZIMError errorInfo) {
+                    if (callback != null) {
+                        callback.onResult(errorInfo.code.value(), errorInfo.message);
+                    }
+                }
+            });
+    }
+
+    public void sendInRoomCommandMessage(String command, String roomID, SendRoomMessageCallback callback) {
+        if (ZIM.getInstance() == null) {
+            return;
+        }
+        byte[] bytes = command.getBytes(StandardCharsets.UTF_8);
+        ZIMCommandMessage commandMessage = new ZIMCommandMessage(bytes);
+        ZIM.getInstance().sendMessage(commandMessage, roomID, ZIMConversationType.ROOM, new ZIMMessageSendConfig(),
+            new ZIMMessageSentCallback() {
                 @Override
                 public void onMessageAttached(ZIMMessage message) {
 
