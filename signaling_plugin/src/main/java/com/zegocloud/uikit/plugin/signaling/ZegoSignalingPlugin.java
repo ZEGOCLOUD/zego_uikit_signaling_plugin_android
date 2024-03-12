@@ -171,6 +171,9 @@ public class ZegoSignalingPlugin implements ZegoSignalingPluginProtocol {
         service.registerPluginEventHandler(handler);
     }
 
+    public void unregisterZIMEventHandler(ZIMEventHandler handler) {
+        service.unregisterZIMEventHandler(handler);
+    }
 
     public void registerZIMEventHandler(ZIMEventHandler handler) {
         service.registerZIMEventHandler(handler);

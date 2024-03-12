@@ -41,6 +41,7 @@ import im.zego.zim.entity.ZIMCallAcceptConfig;
 import im.zego.zim.entity.ZIMCallCancelConfig;
 import im.zego.zim.entity.ZIMCallInvitationAcceptedInfo;
 import im.zego.zim.entity.ZIMCallInvitationCancelledInfo;
+import im.zego.zim.entity.ZIMCallInvitationCreatedInfo;
 import im.zego.zim.entity.ZIMCallInvitationEndedInfo;
 import im.zego.zim.entity.ZIMCallInvitationReceivedInfo;
 import im.zego.zim.entity.ZIMCallInvitationRejectedInfo;
@@ -81,6 +82,7 @@ import im.zego.zim.entity.ZIMRoomOperatedInfo;
 import im.zego.zim.entity.ZIMTextMessage;
 import im.zego.zim.entity.ZIMUserFullInfo;
 import im.zego.zim.entity.ZIMUserInfo;
+import im.zego.zim.enums.ZIMBlacklistChangeAction;
 import im.zego.zim.enums.ZIMConnectionEvent;
 import im.zego.zim.enums.ZIMConnectionState;
 import im.zego.zim.enums.ZIMConversationType;
@@ -510,6 +512,22 @@ public class ZegoSignalingPluginService {
                 super.onConversationTotalUnreadMessageCountUpdated(zim, totalUnreadMessageCount);
                 zimEventHandlerNotifyList.notifyAllListener(handler -> {
                     handler.onConversationTotalUnreadMessageCountUpdated(zim, totalUnreadMessageCount);
+                });
+            }
+
+            @Override
+            public void onCallInvitationCreated(ZIM zim, ZIMCallInvitationCreatedInfo info, String callID) {
+                super.onCallInvitationCreated(zim, info, callID);
+                zimEventHandlerNotifyList.notifyAllListener(handler -> {
+                    handler.onCallInvitationCreated(zim, info, callID);
+                });
+            }
+
+            @Override
+            public void onBlacklistChanged(ZIM zim, ZIMBlacklistChangeAction action, ArrayList<ZIMUserInfo> userList) {
+                super.onBlacklistChanged(zim, action, userList);
+                zimEventHandlerNotifyList.notifyAllListener(handler -> {
+                    handler.onBlacklistChanged(zim, action, userList);
                 });
             }
 
@@ -967,6 +985,10 @@ public class ZegoSignalingPluginService {
 
     public void registerZIMEventHandler(ZIMEventHandler handler) {
         zimEventHandlerNotifyList.addListener(handler, false);
+    }
+
+    public void unregisterZIMEventHandler(ZIMEventHandler handler) {
+        zimEventHandlerNotifyList.removeListener(handler, false);
     }
 
     public void enableNotifyWhenAppRunningInBackgroundOrQuit(boolean enable) {
