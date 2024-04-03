@@ -70,6 +70,11 @@ public class ZegoSignalingPlugin implements ZegoSignalingPluginProtocol {
     }
 
     @Override
+    public void renewToken(String token) {
+        service.renewToken(token,null);
+    }
+
+    @Override
     public void sendInvitation(List<String> invitees, int timeout, String data,
         ZegoSignalingPluginNotificationConfig notificationConfig, InvitationCallback callback) {
         service.sendInvitation(invitees, timeout, data, notificationConfig, callback);
