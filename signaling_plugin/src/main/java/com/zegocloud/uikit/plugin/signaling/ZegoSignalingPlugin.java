@@ -189,4 +189,44 @@ public class ZegoSignalingPlugin implements ZegoSignalingPluginProtocol {
         service.enableNotifyWhenAppRunningInBackgroundOrQuit(enable);
     }
 
+    @Override
+    public void enableFCMPush() {
+        service.enableFCMPush();
+    }
+
+    @Override
+    public void disableFCMPush() {
+        service.disableFCMPush();
+    }
+
+    @Override
+    public void enableHWPush(String hwAppID) {
+        service.enableHWPush(hwAppID);
+    }
+
+    @Override
+    public void enableMiPush(String miAppID, String miAppKey) {
+        service.enableMiPush(miAppID, miAppKey);
+    }
+
+    @Override
+    public void enableVivoPush(String vivoAppID, String vivoAppKey) {
+        service.enableVivoPush(vivoAppID, vivoAppKey);
+    }
+
+    @Override
+    public void enableOppoPush(String oppoAppID, String oppoAppKey, String oppoAppSecret) {
+        service.enableOppoPush(oppoAppID, oppoAppKey, oppoAppSecret);
+    }
+
+    @Override
+    public void registerPush() {
+        service.registerPush();
+    }
+
+    @Override
+    public void unregisterPush() {
+        service.unregisterPush();
+    }
+
 }

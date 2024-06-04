@@ -113,6 +113,7 @@ public class ZegoSignalingPluginService {
     private NotifyList<ZegoSignalingPluginEventHandler> signalingPluginEventHandlerNotifyList = new NotifyList<>();
     private NotifyList<ZIMEventHandler> zimEventHandlerNotifyList = new NotifyList<>();
     private final AtomicBoolean isZIMInited = new AtomicBoolean();
+    private ZPNsConfig zpnsConfig = new ZPNsConfig();
 
     public void init(Application application, Long appID, String appSign) {
         this.application = application;
@@ -672,7 +673,7 @@ public class ZegoSignalingPluginService {
             return;
         }
         ZIMPushConfig pushConfig = new ZIMPushConfig();
-        if (notifyWhenAppRunningInBackgroundOrQuit && notificationConfig != null) {
+        if (notificationConfig != null) {
             pushConfig.payload = data;
             pushConfig.title = notificationConfig.getTitle();
             pushConfig.content = notificationConfig.getMessage();
@@ -697,7 +698,7 @@ public class ZegoSignalingPluginService {
         ZIMCallCancelConfig config = new ZIMCallCancelConfig();
         config.extendedData = data;
         ZIMPushConfig pushConfig = new ZIMPushConfig();
-        if (notifyWhenAppRunningInBackgroundOrQuit && notificationConfig != null) {
+        if (notificationConfig != null) {
             pushConfig.payload = data;
             pushConfig.title = notificationConfig.getTitle();
             pushConfig.content = notificationConfig.getMessage();
@@ -989,6 +990,44 @@ public class ZegoSignalingPluginService {
 
     public void unregisterZIMEventHandler(ZIMEventHandler handler) {
         zimEventHandlerNotifyList.removeListener(handler, false);
+    }
+
+    public void enableFCMPush() {
+        zpnsConfig.enableFCMPush();
+        ZPNsManager.setPushConfig(zpnsConfig);
+    }
+
+    public void disableFCMPush() {
+        zpnsConfig.disableFCMPush();
+        ZPNsManager.setPushConfig(zpnsConfig);
+    }
+
+    public void enableHWPush(String hwAppID) {
+        zpnsConfig.enableHWPush(hwAppID);
+        ZPNsManager.setPushConfig(zpnsConfig);
+    }
+
+    public void enableMiPush(String miAppID, String miAppKey) {
+        zpnsConfig.enableMiPush(miAppID, miAppKey);
+        ZPNsManager.setPushConfig(zpnsConfig);
+    }
+
+    public void enableVivoPush(String vivoAppID, String vivoAppKey) {
+        zpnsConfig.enableVivoPush(vivoAppID, vivoAppKey);
+        ZPNsManager.setPushConfig(zpnsConfig);
+    }
+
+    public void enableOppoPush(String oppoAppID, String oppoAppKey, String oppoAppSecret) {
+        zpnsConfig.enableOppoPush(oppoAppID, oppoAppKey, oppoAppSecret);
+        ZPNsManager.setPushConfig(zpnsConfig);
+    }
+
+    public void registerPush() {
+        ZPNsManager.getInstance().registerPush(application);
+    }
+
+    public void unregisterPush() {
+        ZPNsManager.getInstance().unregisterPush();
     }
 
     public void enableNotifyWhenAppRunningInBackgroundOrQuit(boolean enable) {
