@@ -1023,11 +1023,20 @@ public class ZegoSignalingPluginService {
     }
 
     public void registerPush() {
-        ZPNsManager.getInstance().registerPush(application);
+        try {
+            // if without fcm integrated,will throw exception
+            ZPNsManager.getInstance().registerPush(application);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     public void unregisterPush() {
-        ZPNsManager.getInstance().unregisterPush();
+        try {
+            ZPNsManager.getInstance().unregisterPush();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     public void enableNotifyWhenAppRunningInBackgroundOrQuit(boolean enable) {
