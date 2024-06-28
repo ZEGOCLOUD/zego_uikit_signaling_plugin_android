@@ -229,4 +229,14 @@ public class ZegoSignalingPlugin implements ZegoSignalingPluginProtocol {
         service.unregisterPush();
     }
 
+    @Override
+    public boolean isHMOVPushEnabled() {
+        return service.isHMOVPushEnabled();
+    }
+
+    @Override
+    public boolean isFCMPushEnabled() {
+        return service.isFCMPushEnabled();
+    }
+
 }

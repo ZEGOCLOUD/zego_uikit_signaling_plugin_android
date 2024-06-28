@@ -1022,9 +1022,18 @@ public class ZegoSignalingPluginService {
         ZPNsManager.setPushConfig(zpnsConfig);
     }
 
+    public boolean isHMOVPushEnabled() {
+        return zpnsConfig.enableHWPush || zpnsConfig.enableMiPush || zpnsConfig.enableOppoPush
+            || zpnsConfig.enableVivoPush;
+    }
+
+    public boolean isFCMPushEnabled() {
+        return zpnsConfig.enableFCMPush;
+    }
+
     public void registerPush() {
         try {
-            // if without fcm integrated,will throw exception
+            // if without fcm integrated,will throw exception,so need try/catch
             ZPNsManager.getInstance().registerPush(application);
         } catch (Exception e) {
             e.printStackTrace();
