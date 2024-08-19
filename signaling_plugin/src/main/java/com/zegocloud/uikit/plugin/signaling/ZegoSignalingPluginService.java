@@ -54,10 +54,15 @@ import im.zego.zim.entity.ZIMCommandMessage;
 import im.zego.zim.entity.ZIMConversationChangeInfo;
 import im.zego.zim.entity.ZIMConversationsAllDeletedInfo;
 import im.zego.zim.entity.ZIMError;
+import im.zego.zim.entity.ZIMFriendApplicationInfo;
+import im.zego.zim.entity.ZIMFriendInfo;
+import im.zego.zim.entity.ZIMGroupApplicationInfo;
 import im.zego.zim.entity.ZIMGroupAttributesUpdateInfo;
 import im.zego.zim.entity.ZIMGroupFullInfo;
 import im.zego.zim.entity.ZIMGroupMemberInfo;
+import im.zego.zim.entity.ZIMGroupMuteInfo;
 import im.zego.zim.entity.ZIMGroupOperatedInfo;
+import im.zego.zim.entity.ZIMGroupVerifyInfo;
 import im.zego.zim.entity.ZIMMessage;
 import im.zego.zim.entity.ZIMMessageDeletedInfo;
 import im.zego.zim.entity.ZIMMessageReaction;
@@ -82,11 +87,15 @@ import im.zego.zim.entity.ZIMRoomOperatedInfo;
 import im.zego.zim.entity.ZIMTextMessage;
 import im.zego.zim.entity.ZIMUserFullInfo;
 import im.zego.zim.entity.ZIMUserInfo;
+import im.zego.zim.entity.ZIMUserRule;
 import im.zego.zim.enums.ZIMBlacklistChangeAction;
 import im.zego.zim.enums.ZIMConnectionEvent;
 import im.zego.zim.enums.ZIMConnectionState;
 import im.zego.zim.enums.ZIMConversationType;
 import im.zego.zim.enums.ZIMErrorCode;
+import im.zego.zim.enums.ZIMFriendApplicationListChangeAction;
+import im.zego.zim.enums.ZIMFriendListChangeAction;
+import im.zego.zim.enums.ZIMGroupApplicationListChangeAction;
 import im.zego.zim.enums.ZIMGroupEvent;
 import im.zego.zim.enums.ZIMGroupMemberEvent;
 import im.zego.zim.enums.ZIMGroupMemberState;
@@ -525,10 +534,89 @@ public class ZegoSignalingPluginService {
             }
 
             @Override
-            public void onBlacklistChanged(ZIM zim, ZIMBlacklistChangeAction action, ArrayList<ZIMUserInfo> userList) {
-                super.onBlacklistChanged(zim, action, userList);
+            public void onBlacklistChanged(ZIM zim, ArrayList<ZIMUserInfo> userList, ZIMBlacklistChangeAction action) {
+                super.onBlacklistChanged(zim, userList, action);
                 zimEventHandlerNotifyList.notifyAllListener(handler -> {
-                    handler.onBlacklistChanged(zim, action, userList);
+                    handler.onBlacklistChanged(zim, userList, action);
+                });
+            }
+
+            @Override
+            public void onGroupMutedInfoUpdated(ZIM zim, ZIMGroupMuteInfo muteInfo, ZIMGroupOperatedInfo operatedInfo,
+                String groupID) {
+                super.onGroupMutedInfoUpdated(zim, muteInfo, operatedInfo, groupID);
+                zimEventHandlerNotifyList.notifyAllListener(handler -> {
+                    handler.onGroupMutedInfoUpdated(zim, muteInfo, operatedInfo, groupID);
+                });
+            }
+
+            @Override
+            public void onFriendApplicationListChanged(ZIM zim,
+                ArrayList<ZIMFriendApplicationInfo> friendApplicationInfoList,
+                ZIMFriendApplicationListChangeAction action) {
+                super.onFriendApplicationListChanged(zim, friendApplicationInfoList, action);
+                zimEventHandlerNotifyList.notifyAllListener(handler -> {
+                    handler.onFriendApplicationListChanged(zim, friendApplicationInfoList, action);
+                });
+            }
+
+            @Override
+            public void onFriendApplicationUpdated(ZIM zim,
+                ArrayList<ZIMFriendApplicationInfo> friendApplicationInfoList) {
+                super.onFriendApplicationUpdated(zim, friendApplicationInfoList);
+                zimEventHandlerNotifyList.notifyAllListener(handler -> {
+                    handler.onFriendApplicationUpdated(zim, friendApplicationInfoList);
+                });
+            }
+
+            @Override
+            public void onGroupApplicationListChanged(ZIM zim, ArrayList<ZIMGroupApplicationInfo> applicationList,
+                ZIMGroupApplicationListChangeAction action) {
+                super.onGroupApplicationListChanged(zim, applicationList, action);
+                zimEventHandlerNotifyList.notifyAllListener(handler -> {
+                    handler.onGroupApplicationListChanged(zim, applicationList, action);
+                });
+            }
+
+            @Override
+            public void onGroupApplicationUpdated(ZIM zim, ArrayList<ZIMGroupApplicationInfo> applicationList) {
+                super.onGroupApplicationUpdated(zim, applicationList);
+                zimEventHandlerNotifyList.notifyAllListener(handler -> {
+                    handler.onGroupApplicationUpdated(zim, applicationList);
+                });
+            }
+
+            @Override
+            public void onGroupVerifyInfoUpdated(ZIM zim, ZIMGroupVerifyInfo verifyInfo,
+                ZIMGroupOperatedInfo operatedInfo, String groupID) {
+                super.onGroupVerifyInfoUpdated(zim, verifyInfo, operatedInfo, groupID);
+                zimEventHandlerNotifyList.notifyAllListener(handler -> {
+                    handler.onGroupVerifyInfoUpdated(zim, verifyInfo, operatedInfo, groupID);
+                });
+            }
+
+            @Override
+            public void onUserRuleUpdated(ZIM zim, ZIMUserRule rule) {
+                super.onUserRuleUpdated(zim, rule);
+                zimEventHandlerNotifyList.notifyAllListener(handler -> {
+                    handler.onUserRuleUpdated(zim, rule);
+                });
+            }
+
+            @Override
+            public void onFriendInfoUpdated(ZIM zim, ArrayList<ZIMFriendInfo> friendInfoList) {
+                super.onFriendInfoUpdated(zim, friendInfoList);
+                zimEventHandlerNotifyList.notifyAllListener(handler -> {
+                    handler.onFriendInfoUpdated(zim, friendInfoList);
+                });
+            }
+
+            @Override
+            public void onFriendListChanged(ZIM zim, ArrayList<ZIMFriendInfo> friendInfoList,
+                ZIMFriendListChangeAction action) {
+                super.onFriendListChanged(zim, friendInfoList, action);
+                zimEventHandlerNotifyList.notifyAllListener(handler -> {
+                    handler.onFriendListChanged(zim, friendInfoList, action);
                 });
             }
 
@@ -795,7 +883,7 @@ public class ZegoSignalingPluginService {
         if (ZIM.getInstance() == null) {
             return;
         }
-        ZIM.getInstance().destroy();
+        //        ZIM.getInstance().destroy();
         isZIMInited.set(false);
         zimEventHandlerNotifyList.clear();
         signalingPluginEventHandlerNotifyList.clear();
