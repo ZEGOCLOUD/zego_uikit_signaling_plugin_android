@@ -17,7 +17,28 @@ import com.zegocloud.uikit.plugin.adapter.plugins.signaling.SetUsersInRoomAttrib
 import com.zegocloud.uikit.plugin.adapter.plugins.signaling.ZegoSignalingPluginEventHandler;
 import com.zegocloud.uikit.plugin.adapter.plugins.signaling.ZegoSignalingPluginNotificationConfig;
 import com.zegocloud.uikit.plugin.adapter.plugins.signaling.ZegoSignalingPluginProtocol;
+import im.zego.zim.callback.ZIMCallAcceptanceSentCallback;
+import im.zego.zim.callback.ZIMCallCancelSentCallback;
+import im.zego.zim.callback.ZIMCallEndSentCallback;
+import im.zego.zim.callback.ZIMCallInvitationSentCallback;
+import im.zego.zim.callback.ZIMCallJoinSentCallback;
+import im.zego.zim.callback.ZIMCallQuitSentCallback;
+import im.zego.zim.callback.ZIMCallRejectionSentCallback;
+import im.zego.zim.callback.ZIMCallingInvitationSentCallback;
 import im.zego.zim.callback.ZIMEventHandler;
+import im.zego.zim.callback.ZIMUsersInfoQueriedCallback;
+import im.zego.zim.entity.ZIMCallAcceptConfig;
+import im.zego.zim.entity.ZIMCallCancelConfig;
+import im.zego.zim.entity.ZIMCallEndConfig;
+import im.zego.zim.entity.ZIMCallInfo;
+import im.zego.zim.entity.ZIMCallInviteConfig;
+import im.zego.zim.entity.ZIMCallJoinConfig;
+import im.zego.zim.entity.ZIMCallQuitConfig;
+import im.zego.zim.entity.ZIMCallRejectConfig;
+import im.zego.zim.entity.ZIMCallingInviteConfig;
+import im.zego.zim.entity.ZIMUserFullInfo;
+import im.zego.zim.entity.ZIMUserInfo;
+import im.zego.zim.entity.ZIMUsersInfoQueryConfig;
 import java.util.HashMap;
 import java.util.List;
 
@@ -71,7 +92,7 @@ public class ZegoSignalingPlugin implements ZegoSignalingPluginProtocol {
 
     @Override
     public void renewToken(String token) {
-        service.renewToken(token,null);
+        service.renewToken(token, null);
     }
 
     @Override
@@ -239,4 +260,61 @@ public class ZegoSignalingPlugin implements ZegoSignalingPluginProtocol {
         return service.isFCMPushEnabled();
     }
 
+    public ZIMCallInfo getZIMCallInfo(String callID) {
+        return service.getZIMCallInfo(callID);
+    }
+
+    public ZIMUserInfo getUserInfo() {
+        return service.getUserInfo();
+    }
+
+    public ZIMUserFullInfo getMemoryUserInfo(String userID) {
+        return service.getMemoryUserInfo(userID);
+    }
+
+    /**
+     * use the data in memory first,if not all cached in memory,then call zim.query().
+     *
+     * @param userIDList
+     * @param config
+     * @param callback
+     */
+    public void queryUserInfo(List<String> userIDList, ZIMUsersInfoQueryConfig config,
+        ZIMUsersInfoQueriedCallback callback) {
+        service.queryUserInfo(userIDList, config, callback);
+    }
+
+    public void callJoin(String callID, ZIMCallJoinConfig config, ZIMCallJoinSentCallback callback) {
+        service.callJoin(callID, config, callback);
+    }
+
+    public void callQuit(String callID, ZIMCallQuitConfig config, ZIMCallQuitSentCallback callback) {
+        service.callQuit(callID, config, callback);
+    }
+
+    public void callEnd(String callID, ZIMCallEndConfig config, ZIMCallEndSentCallback callback) {
+        service.callEnd(callID, config, callback);
+    }
+
+    public void callCancel(List<String> invitees, String callID, ZIMCallCancelConfig config,
+        ZIMCallCancelSentCallback callback) {
+        service.callCancel(invitees, callID, config, callback);
+    }
+
+    public void callingInvite(List<String> invitees, String callID, ZIMCallingInviteConfig config,
+        ZIMCallingInvitationSentCallback callback) {
+        service.callingInvite(invitees, callID, config, callback);
+    }
+
+    public void callReject(String callID, ZIMCallRejectConfig config, ZIMCallRejectionSentCallback callback) {
+        service.callReject(callID, config, callback);
+    }
+
+    public void callAccept(String callID, ZIMCallAcceptConfig config, ZIMCallAcceptanceSentCallback callback) {
+        service.callAccept(callID, config, callback);
+    }
+
+    public void callInvite(List<String> invitees, ZIMCallInviteConfig config, ZIMCallInvitationSentCallback callback) {
+        service.callInvite(invitees, config, callback);
+    }
 }
