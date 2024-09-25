@@ -240,6 +240,10 @@ public class ZegoSignalingPlugin implements ZegoSignalingPluginProtocol {
         service.enableOppoPush(oppoAppID, oppoAppKey, oppoAppSecret);
     }
 
+    public void setAppType(int appType){
+        service.setAppType(appType);
+    }
+
     @Override
     public void registerPush() {
         service.registerPush();

@@ -1,6 +1,5 @@
 package com.zegocloud.uikit.plugin.signaling.call;
 
-import android.util.Log;
 import androidx.annotation.Nullable;
 import com.zegocloud.uikit.plugin.signaling.user.ZIMUserRepository;
 import im.zego.zim.ZIM;
@@ -355,9 +354,7 @@ public class ZIMCallRepository {
         });
     }
 
-    public void queryCallInvitationList(ZIMCallInvitationQueryConfig config,
-        ZIMCallInvitationListQueriedCallback callback) {
-        Log.d(TAG, "queryCallInvitationList() called with: config = [" + config + "], callback = [" + callback + "]");
+    public void queryCallInvitationList(ZIMCallInvitationQueryConfig config, ZIMCallInvitationListQueriedCallback callback) {
         if (ZIM.getInstance() == null) {
             if (callback != null) {
                 ZIMError errorInfo = new ZIMError();
@@ -370,9 +367,6 @@ public class ZIMCallRepository {
             @Override
             public void onCallInvitationListQueried(ArrayList<ZIMCallInfo> callList, long nextFlag,
                 ZIMError errorInfo) {
-                Log.d(TAG,
-                    "onCallInvitationListQueried() called with: callList = [" + callList + "], nextFlag = [" + nextFlag
-                        + "], errorInfo = [" + errorInfo + "]");
                 if (errorInfo.code == ZIMErrorCode.SUCCESS) {
                     ZIMCallRepository.this.zimCallInfoList = new ArrayList<>(callList);
                 }
@@ -382,8 +376,6 @@ public class ZIMCallRepository {
             }
         });
     }
-
-    private static final String TAG = "ZIMCallRepository";
 
 
     public void onCallInvitationCreated(ZIM zim, ZIMCallInvitationCreatedInfo info, String callID) {

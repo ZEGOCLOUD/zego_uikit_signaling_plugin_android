@@ -27,6 +27,7 @@ import im.zego.zim.ZIM;
 import im.zego.zim.callback.ZIMCallAcceptanceSentCallback;
 import im.zego.zim.callback.ZIMCallCancelSentCallback;
 import im.zego.zim.callback.ZIMCallEndSentCallback;
+import im.zego.zim.callback.ZIMCallInvitationListQueriedCallback;
 import im.zego.zim.callback.ZIMCallInvitationSentCallback;
 import im.zego.zim.callback.ZIMCallJoinSentCallback;
 import im.zego.zim.callback.ZIMCallQuitSentCallback;
@@ -54,6 +55,7 @@ import im.zego.zim.entity.ZIMCallInvitationAcceptedInfo;
 import im.zego.zim.entity.ZIMCallInvitationCancelledInfo;
 import im.zego.zim.entity.ZIMCallInvitationCreatedInfo;
 import im.zego.zim.entity.ZIMCallInvitationEndedInfo;
+import im.zego.zim.entity.ZIMCallInvitationQueryConfig;
 import im.zego.zim.entity.ZIMCallInvitationReceivedInfo;
 import im.zego.zim.entity.ZIMCallInvitationRejectedInfo;
 import im.zego.zim.entity.ZIMCallInvitationSentInfo;
@@ -142,6 +144,7 @@ public class ZegoSignalingPluginService {
     private NotifyList<ZegoSignalingPluginEventHandler> signalingPluginEventHandlerNotifyList = new NotifyList<>();
     private NotifyList<ZIMEventHandler> zimEventHandlerNotifyList = new NotifyList<>();
     private final AtomicBoolean isZIMInited = new AtomicBoolean();
+
     private ZPNsConfig zpnsConfig = new ZPNsConfig();
 
     private ZIMUserRepository userRepository;
@@ -820,10 +823,12 @@ public class ZegoSignalingPluginService {
         ZIMUserInfo zimUserInfo = new ZIMUserInfo();
         zimUserInfo.userID = userID;
         zimUserInfo.userName = userName;
-
+        Timber.d("zim login() called with: userID = [" + userID + "], userName = [" + userName + "], token = [" + token
+            + "], callback = [" + callback + "]");
         userRepository.login(zimUserInfo, token, new ZIMLoggedInCallback() {
 
             public void onLoggedIn(ZIMError errorInfo) {
+                Timber.d("zim login() result called with: errorInfo = [" + errorInfo + "]");
                 if (callback != null) {
                     int code = errorInfo.code == ZIMErrorCode.USER_HAS_ALREADY_LOGGED ? ZIMErrorCode.SUCCESS.value()
                         : errorInfo.code.value();
@@ -835,6 +840,7 @@ public class ZegoSignalingPluginService {
 
 
     public void disconnectUser() {
+        Timber.d("disconnectUser() called");
         userRepository.logout();
     }
 
@@ -937,8 +943,7 @@ public class ZegoSignalingPluginService {
         callRepository.callReject(callID, config, new ZIMCallRejectionSentCallback() {
             @Override
             public void onCallRejectionSent(String callID, ZIMError errorInfo) {
-                Timber.d(
-                    "callReject result() called with: callID = [" + callID + "], errorInfo = [" + errorInfo + "]");
+                Timber.d("callReject result() called with: callID = [" + callID + "], errorInfo = [" + errorInfo + "]");
                 if (callback != null) {
                     callback.onCallRejectionSent(callID, errorInfo);
                 }
@@ -953,8 +958,7 @@ public class ZegoSignalingPluginService {
         callRepository.callAccept(callID, config, new ZIMCallAcceptanceSentCallback() {
             @Override
             public void onCallAcceptanceSent(String callID, ZIMError errorInfo) {
-                Timber.d(
-                    "callAccept result() called with: callID = [" + callID + "], errorInfo = [" + errorInfo + "]");
+                Timber.d("callAccept result() called with: callID = [" + callID + "], errorInfo = [" + errorInfo + "]");
                 if (callback != null) {
                     callback.onCallAcceptanceSent(callID, errorInfo);
                 }
@@ -972,8 +976,9 @@ public class ZegoSignalingPluginService {
         callRepository.callInvite(invitees, config, new ZIMCallInvitationSentCallback() {
             @Override
             public void onCallInvitationSent(String callID, ZIMCallInvitationSentInfo info, ZIMError errorInfo) {
-                Timber.d("callInvite result() called with: callID = [" + callID + "], info = [" + info
-                    + "], errorInfo = [" + errorInfo + "]");
+                Timber.d(
+                    "callInvite result() called with: callID = [" + callID + "], info = [" + info + "], errorInfo = ["
+                        + errorInfo + "]");
                 if (callback != null) {
                     callback.onCallInvitationSent(callID, info, errorInfo);
                 }
@@ -1070,6 +1075,24 @@ public class ZegoSignalingPluginService {
         });
     }
 
+    public void queryCallInvitationList(ZIMCallInvitationQueryConfig config,
+        ZIMCallInvitationListQueriedCallback callback) {
+        Timber.d("queryCallInvitationList() called with: config.count = [" + config.count + "], config.nextFlag = ["
+            + config.nextFlag + "]");
+        callRepository.queryCallInvitationList(config, new ZIMCallInvitationListQueriedCallback() {
+            @Override
+            public void onCallInvitationListQueried(ArrayList<ZIMCallInfo> callList, long nextFlag,
+                ZIMError errorInfo) {
+                Timber.d(
+                    "onCallInvitationListQueried() called with: callList = [" + callList + "], nextFlag = [" + nextFlag
+                        + "], errorInfo = [" + errorInfo + "]");
+                if (callback != null) {
+                    callback.onCallInvitationListQueried(callList, nextFlag, errorInfo);
+                }
+            }
+        });
+    }
+
     public void joinRoom(String roomID, RoomCallback callback) {
         joinRoom(roomID, "", callback);
     }
@@ -1080,9 +1103,15 @@ public class ZegoSignalingPluginService {
         zimRoomInfo.roomID = roomID;
         zimRoomInfo.roomName = roomName;
         ZIMRoomAdvancedConfig config = new ZIMRoomAdvancedConfig();
+        Timber.d(
+            "enterRoom() called with: roomID = [" + roomID + "], roomName = [" + roomName + "], callback = [" + callback
+                + "]");
         roomRepository.enterRoom(zimRoomInfo, config, new ZIMRoomEnteredCallback() {
 
             public void onRoomEntered(ZIMRoomFullInfo roomInfo, ZIMError errorInfo) {
+                Timber.d(
+                    "onRoomEntered() called with: roomInfo = [" + roomInfo.baseInfo + "], errorInfo = [" + errorInfo
+                        + "]");
                 if (callback != null) {
                     callback.onResult(errorInfo.code.value(), errorInfo.message);
                 }
@@ -1092,9 +1121,11 @@ public class ZegoSignalingPluginService {
 
 
     public void leaveRoom(String roomID, RoomCallback callback) {
+        Timber.d("leaveRoom() called with: roomID = [" + roomID + "], callback = [" + callback + "]");
         roomRepository.leaveRoom(roomID, new ZIMRoomLeftCallback() {
 
             public void onRoomLeft(String roomID, ZIMError errorInfo) {
+                Timber.d("onRoomLeft() called with: roomID = [" + roomID + "], errorInfo = [" + errorInfo + "]");
                 if (callback != null) {
                     callback.onResult(errorInfo.code.value(), errorInfo.message);
                 }
@@ -1103,6 +1134,7 @@ public class ZegoSignalingPluginService {
     }
 
     public void destroy() {
+        Timber.d("destroy() called");
         if (ZIM.getInstance() == null) {
             return;
         }
@@ -1331,6 +1363,11 @@ public class ZegoSignalingPluginService {
 
     public void enableOppoPush(String oppoAppID, String oppoAppKey, String oppoAppSecret) {
         zpnsConfig.enableOppoPush(oppoAppID, oppoAppKey, oppoAppSecret);
+        ZPNsManager.setPushConfig(zpnsConfig);
+    }
+
+    public void setAppType(int appType) {
+        zpnsConfig.setAppType(appType);
         ZPNsManager.setPushConfig(zpnsConfig);
     }
 
