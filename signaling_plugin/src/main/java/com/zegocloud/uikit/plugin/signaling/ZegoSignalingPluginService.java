@@ -1371,7 +1371,7 @@ public class ZegoSignalingPluginService {
         ZPNsManager.setPushConfig(zpnsConfig);
     }
 
-    public boolean isHMOVPushEnabled() {
+    public boolean isOtherPushEnabled() {
         return zpnsConfig.enableHWPush || zpnsConfig.enableMiPush || zpnsConfig.enableOppoPush
             || zpnsConfig.enableVivoPush;
     }

@@ -240,6 +240,7 @@ public class ZegoSignalingPlugin implements ZegoSignalingPluginProtocol {
         service.enableOppoPush(oppoAppID, oppoAppKey, oppoAppSecret);
     }
 
+    @Override
     public void setAppType(int appType){
         service.setAppType(appType);
     }
@@ -255,8 +256,8 @@ public class ZegoSignalingPlugin implements ZegoSignalingPluginProtocol {
     }
 
     @Override
-    public boolean isHMOVPushEnabled() {
-        return service.isHMOVPushEnabled();
+    public boolean isOtherPushEnabled() {
+        return service.isOtherPushEnabled();
     }
 
     @Override
