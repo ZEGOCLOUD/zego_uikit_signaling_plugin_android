@@ -73,6 +73,7 @@ import im.zego.zim.entity.ZIMCommandMessage;
 import im.zego.zim.entity.ZIMConversationChangeInfo;
 import im.zego.zim.entity.ZIMConversationsAllDeletedInfo;
 import im.zego.zim.entity.ZIMError;
+import im.zego.zim.entity.ZIMErrorUserInfo;
 import im.zego.zim.entity.ZIMFriendApplicationInfo;
 import im.zego.zim.entity.ZIMFriendInfo;
 import im.zego.zim.entity.ZIMGroupApplicationInfo;
@@ -1423,7 +1424,21 @@ public class ZegoSignalingPluginService {
 
     public void queryUserInfo(List<String> userIDList, ZIMUsersInfoQueryConfig config,
         ZIMUsersInfoQueriedCallback callback) {
-        userRepository.queryUserInfo(userIDList, config, callback);
+        Timber.d(
+            "queryUserInfo() called with: userIDList = [" + userIDList + "], config = [" + config + "], callback = ["
+                + callback + "]");
+        userRepository.queryUserInfo(userIDList, config, new ZIMUsersInfoQueriedCallback() {
+            @Override
+            public void onUsersInfoQueried(ArrayList<ZIMUserFullInfo> userList,
+                ArrayList<ZIMErrorUserInfo> errorUserList, ZIMError errorInfo) {
+                Timber.d(
+                    "onUsersInfoQueried() called with: userList = [" + userList + "], errorUserList = [" + errorUserList
+                        + "], errorInfo = [" + errorInfo + "]");
+                if (callback != null) {
+                    callback.onUsersInfoQueried(userList, errorUserList, errorInfo);
+                }
+            }
+        });
     }
 
     public ZIMUserFullInfo getMemoryUserInfo(String userID) {
