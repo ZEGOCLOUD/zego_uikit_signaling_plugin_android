@@ -26,6 +26,6 @@ android {
 dependencies {
     api 'im.zego:zim:2.17.1'
     api 'im.zego:zpns:2.6.0'
-    api 'com.github.ZEGOCLOUD:zego_uikit_plugin_adapter_android:[2.8.0,)'
+    api 'com.github.ZEGOCLOUD:zego_uikit_plugin_adapter_android:[2.9.0,)'
     api 'com.google.firebase:firebase-messaging:21.1.0'
 }

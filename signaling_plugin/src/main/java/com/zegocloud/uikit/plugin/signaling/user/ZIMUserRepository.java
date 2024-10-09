@@ -100,27 +100,8 @@ public class ZIMUserRepository {
             return;
         }
 
-        List<String> needQueryUserIDList = new ArrayList<>();
-        ArrayList<ZIMUserFullInfo> resultUserList = new ArrayList<>();
-
-        for (String userID : userIDList) {
-            ZIMUserFullInfo memoryUserInfo = getMemoryUserInfo(userID);
-            if (memoryUserInfo == null) {
-                needQueryUserIDList.add(userID);
-            } else {
-                resultUserList.add(memoryUserInfo);
-            }
-        }
-
-        if (needQueryUserIDList.isEmpty()) {
-            ZIMError zimError = new ZIMError();
-            zimError.code = ZIMErrorCode.SUCCESS;
-            zimError.message = ZIMErrorCode.SUCCESS.toString();
-            if (callback != null) {
-                callback.onUsersInfoQueried(resultUserList, new ArrayList<>(), zimError);
-            }
-        } else {
-            ZIM.getInstance().queryUsersInfo(needQueryUserIDList, config, new ZIMUsersInfoQueriedCallback() {
+        if (config != null && config.isQueryFromServer) {
+            ZIM.getInstance().queryUsersInfo(userIDList, config, new ZIMUsersInfoQueriedCallback() {
                 @Override
                 public void onUsersInfoQueried(ArrayList<ZIMUserFullInfo> userList,
                     ArrayList<ZIMErrorUserInfo> errorUserList, ZIMError errorInfo) {
@@ -143,7 +124,53 @@ public class ZIMUserRepository {
                     }
                 }
             });
+        } else {
+            List<String> needQueryUserIDList = new ArrayList<>();
+            ArrayList<ZIMUserFullInfo> resultUserList = new ArrayList<>();
+
+            for (String userID : userIDList) {
+                ZIMUserFullInfo memoryUserInfo = getMemoryUserInfo(userID);
+                if (memoryUserInfo == null) {
+                    needQueryUserIDList.add(userID);
+                } else {
+                    resultUserList.add(memoryUserInfo);
+                }
+            }
+
+            if (needQueryUserIDList.isEmpty()) {
+                ZIMError zimError = new ZIMError();
+                zimError.code = ZIMErrorCode.SUCCESS;
+                zimError.message = ZIMErrorCode.SUCCESS.toString();
+                if (callback != null) {
+                    callback.onUsersInfoQueried(resultUserList, new ArrayList<>(), zimError);
+                }
+            } else {
+                ZIM.getInstance().queryUsersInfo(needQueryUserIDList, config, new ZIMUsersInfoQueriedCallback() {
+                    @Override
+                    public void onUsersInfoQueried(ArrayList<ZIMUserFullInfo> userList,
+                        ArrayList<ZIMErrorUserInfo> errorUserList, ZIMError errorInfo) {
+                        if (userFullInfoMap == null) {
+                            userFullInfoMap = new HashMap<>();
+                        }
+                        for (ZIMUserFullInfo zimUserFullInfo : userList) {
+                            userFullInfoMap.put(zimUserFullInfo.baseInfo.userID, zimUserFullInfo);
+                        }
+
+                        ArrayList<ZIMUserFullInfo> result = new ArrayList<>();
+                        for (String userID : userIDList) {
+                            ZIMUserFullInfo zimUserFullInfo = userFullInfoMap.get(userID);
+                            if (zimUserFullInfo != null) {
+                                result.add(zimUserFullInfo);
+                            }
+                        }
+                        if (callback != null) {
+                            callback.onUsersInfoQueried(result, errorUserList, errorInfo);
+                        }
+                    }
+                });
+            }
         }
+
     }
 
     /**

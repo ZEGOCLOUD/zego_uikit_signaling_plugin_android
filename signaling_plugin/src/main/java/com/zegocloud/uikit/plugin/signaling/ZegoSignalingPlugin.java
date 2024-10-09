@@ -6,6 +6,7 @@ import com.zegocloud.uikit.plugin.adapter.plugins.signaling.CancelInvitationCall
 import com.zegocloud.uikit.plugin.adapter.plugins.signaling.ConnectUserCallback;
 import com.zegocloud.uikit.plugin.adapter.plugins.signaling.EndRoomBatchOperationCallback;
 import com.zegocloud.uikit.plugin.adapter.plugins.signaling.InvitationCallback;
+import com.zegocloud.uikit.plugin.adapter.plugins.signaling.PluginZIMUser;
 import com.zegocloud.uikit.plugin.adapter.plugins.signaling.QueryRoomPropertyCallback;
 import com.zegocloud.uikit.plugin.adapter.plugins.signaling.QueryUsersInRoomAttributesCallback;
 import com.zegocloud.uikit.plugin.adapter.plugins.signaling.RenewTokenCallback;
@@ -73,6 +74,19 @@ public class ZegoSignalingPlugin implements ZegoSignalingPluginProtocol {
     @Override
     public void connectUser(String userID, String userName, String token, ConnectUserCallback callback) {
         service.connectUser(userID, userName, token, callback);
+    }
+
+    @Override
+    public PluginZIMUser getCurrentUser() {
+        ZIMUserInfo userInfo = service.getUserInfo();
+        if (userInfo == null) {
+            return null;
+        }
+        PluginZIMUser pluginZIMUser = new PluginZIMUser();
+        pluginZIMUser.userID = userInfo.userID;
+        pluginZIMUser.userName = userInfo.userName;
+        pluginZIMUser.userAvatarUrl = userInfo.userAvatarUrl;
+        return pluginZIMUser;
     }
 
     @Override
@@ -241,7 +255,7 @@ public class ZegoSignalingPlugin implements ZegoSignalingPluginProtocol {
     }
 
     @Override
-    public void setAppType(int appType){
+    public void setAppType(int appType) {
         service.setAppType(appType);
     }
 
