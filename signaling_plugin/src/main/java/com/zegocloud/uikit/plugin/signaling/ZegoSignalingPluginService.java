@@ -1422,6 +1422,14 @@ public class ZegoSignalingPluginService {
         return userRepository.getUserInfo();
     }
 
+    public ZIMConnectionEvent getConnectionEvent() {
+        return userRepository.getConnectionEvent();
+    }
+
+    public ZIMConnectionState getConnectionState() {
+        return userRepository.getConnectionState();
+    }
+
     public void queryUserInfo(List<String> userIDList, ZIMUsersInfoQueryConfig config,
         ZIMUsersInfoQueriedCallback callback) {
         Timber.d(

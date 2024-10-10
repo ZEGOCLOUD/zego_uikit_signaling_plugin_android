@@ -80,6 +80,14 @@ public class ZIMUserRepository {
         this.connectionEvent = event;
     }
 
+    public ZIMConnectionEvent getConnectionEvent() {
+        return connectionEvent;
+    }
+
+    public ZIMConnectionState getConnectionState() {
+        return connectionState;
+    }
+
     public ZIMUserFullInfo getMemoryUserInfo(String userID) {
         if (userFullInfoMap == null || userFullInfoMap.isEmpty()) {
             return null;

@@ -40,6 +40,8 @@ import im.zego.zim.entity.ZIMCallingInviteConfig;
 import im.zego.zim.entity.ZIMUserFullInfo;
 import im.zego.zim.entity.ZIMUserInfo;
 import im.zego.zim.entity.ZIMUsersInfoQueryConfig;
+import im.zego.zim.enums.ZIMConnectionEvent;
+import im.zego.zim.enums.ZIMConnectionState;
 import java.util.HashMap;
 import java.util.List;
 
@@ -335,5 +337,13 @@ public class ZegoSignalingPlugin implements ZegoSignalingPluginProtocol {
 
     public void callInvite(List<String> invitees, ZIMCallInviteConfig config, ZIMCallInvitationSentCallback callback) {
         service.callInvite(invitees, config, callback);
+    }
+
+    public ZIMConnectionEvent getConnectionEvent() {
+        return service.getConnectionEvent();
+    }
+
+    public ZIMConnectionState getConnectionState() {
+        return service.getConnectionState();
     }
 }
