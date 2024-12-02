@@ -47,7 +47,7 @@ public class ZIMUserRepository {
                 public void onLoggedIn(ZIMError errorInfo) {
                     isLoginIng = false;
                     if (errorInfo.code != ZIMErrorCode.SUCCESS) {
-                        zimUserInfo = null;
+                        clearLoginData();
                     }
                     if (callback != null) {
                         callback.onLoggedIn(errorInfo);
@@ -57,13 +57,22 @@ public class ZIMUserRepository {
         }
     }
 
+    public void clearLoginData() {
+        zimUserInfo = null;
+        isLoginIng = false;
+        connectionState = ZIMConnectionState.DISCONNECTED;
+        connectionEvent = ZIMConnectionEvent.UNKNOWN;
+        if (userFullInfoMap != null) {
+            userFullInfoMap.clear();
+        }
+    }
+
     public void logout() {
         if (ZIM.getInstance() == null) {
             return;
         }
         ZIM.getInstance().logout();
-        zimUserInfo = null;
-        isLoginIng = false;
+        clearLoginData();
     }
 
     public ZIMUserInfo getUserInfo() {

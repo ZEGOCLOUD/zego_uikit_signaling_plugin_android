@@ -1140,6 +1140,7 @@ public class ZegoSignalingPluginService {
             return;
         }
         isZIMInited.set(false);
+        userRepository.clearLoginData();
         zimEventHandlerNotifyList.clear();
         signalingPluginEventHandlerNotifyList.clear();
         ZIM.getInstance().setEventHandler(null);
