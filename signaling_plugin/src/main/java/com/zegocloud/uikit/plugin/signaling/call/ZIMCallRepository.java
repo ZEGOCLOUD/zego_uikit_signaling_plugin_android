@@ -354,7 +354,8 @@ public class ZIMCallRepository {
         });
     }
 
-    public void queryCallInvitationList(ZIMCallInvitationQueryConfig config, ZIMCallInvitationListQueriedCallback callback) {
+    public void queryCallInvitationList(ZIMCallInvitationQueryConfig config,
+        ZIMCallInvitationListQueriedCallback callback) {
         if (ZIM.getInstance() == null) {
             if (callback != null) {
                 ZIMError errorInfo = new ZIMError();

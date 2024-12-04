@@ -1,6 +1,7 @@
 package com.zegocloud.uikit.plugin.signaling;
 
 import android.app.Application;
+import android.util.Log;
 import com.zegocloud.uikit.plugin.adapter.plugins.signaling.CancelInvitationCallback;
 import com.zegocloud.uikit.plugin.adapter.plugins.signaling.ConnectUserCallback;
 import com.zegocloud.uikit.plugin.adapter.plugins.signaling.EndRoomBatchOperationCallback;
@@ -21,6 +22,10 @@ import com.zegocloud.uikit.plugin.adapter.plugins.signaling.ZegoSignalingPluginN
 import com.zegocloud.uikit.plugin.adapter.utils.GenericUtils;
 import com.zegocloud.uikit.plugin.adapter.utils.NotifyList;
 import com.zegocloud.uikit.plugin.signaling.call.ZIMCallRepository;
+import com.zegocloud.uikit.plugin.signaling.call.ZPNSRepository;
+import com.zegocloud.uikit.plugin.signaling.conversation.ZIMConversationRepository;
+import com.zegocloud.uikit.plugin.signaling.group.ZIMGroupRepository;
+import com.zegocloud.uikit.plugin.signaling.message.ZIMMessageRepository;
 import com.zegocloud.uikit.plugin.signaling.room.ZIMRoomRepository;
 import com.zegocloud.uikit.plugin.signaling.user.ZIMUserRepository;
 import im.zego.zim.ZIM;
@@ -33,9 +38,32 @@ import im.zego.zim.callback.ZIMCallJoinSentCallback;
 import im.zego.zim.callback.ZIMCallQuitSentCallback;
 import im.zego.zim.callback.ZIMCallRejectionSentCallback;
 import im.zego.zim.callback.ZIMCallingInvitationSentCallback;
+import im.zego.zim.callback.ZIMCombineMessageDetailQueriedCallback;
+import im.zego.zim.callback.ZIMConversationDeletedCallback;
+import im.zego.zim.callback.ZIMConversationListQueriedCallback;
+import im.zego.zim.callback.ZIMConversationMessageReceiptReadSentCallback;
+import im.zego.zim.callback.ZIMConversationNotificationStatusSetCallback;
+import im.zego.zim.callback.ZIMConversationPinnedListQueriedCallback;
+import im.zego.zim.callback.ZIMConversationPinnedStateUpdatedCallback;
+import im.zego.zim.callback.ZIMConversationQueriedCallback;
+import im.zego.zim.callback.ZIMConversationTotalUnreadMessageCountClearedCallback;
+import im.zego.zim.callback.ZIMConversationTotalUnreadMessageCountQueriedCallback;
+import im.zego.zim.callback.ZIMConversationUnreadMessageCountClearedCallback;
+import im.zego.zim.callback.ZIMConversationsAllDeletedCallback;
 import im.zego.zim.callback.ZIMEventHandler;
+import im.zego.zim.callback.ZIMGroupMemberInfoQueriedCallback;
+import im.zego.zim.callback.ZIMGroupMemberListQueriedCallback;
 import im.zego.zim.callback.ZIMLoggedInCallback;
+import im.zego.zim.callback.ZIMMediaDownloadedCallback;
+import im.zego.zim.callback.ZIMMediaMessageSentCallback;
+import im.zego.zim.callback.ZIMMessageDeletedCallback;
+import im.zego.zim.callback.ZIMMessageQueriedCallback;
+import im.zego.zim.callback.ZIMMessageReactionAddedCallback;
+import im.zego.zim.callback.ZIMMessageReactionDeletedCallback;
+import im.zego.zim.callback.ZIMMessageReactionUserListQueriedCallback;
+import im.zego.zim.callback.ZIMMessageRevokedCallback;
 import im.zego.zim.callback.ZIMMessageSentCallback;
+import im.zego.zim.callback.ZIMMessageSentFullCallback;
 import im.zego.zim.callback.ZIMRoomAttributesBatchOperatedCallback;
 import im.zego.zim.callback.ZIMRoomAttributesOperatedCallback;
 import im.zego.zim.callback.ZIMRoomAttributesQueriedCallback;
@@ -43,7 +71,7 @@ import im.zego.zim.callback.ZIMRoomEnteredCallback;
 import im.zego.zim.callback.ZIMRoomLeftCallback;
 import im.zego.zim.callback.ZIMRoomMemberAttributesListQueriedCallback;
 import im.zego.zim.callback.ZIMRoomMembersAttributesOperatedCallback;
-import im.zego.zim.callback.ZIMTokenRenewedCallback;
+import im.zego.zim.callback.ZIMUserAvatarUrlUpdatedCallback;
 import im.zego.zim.callback.ZIMUsersInfoQueriedCallback;
 import im.zego.zim.entity.ZIMAppConfig;
 import im.zego.zim.entity.ZIMCallAcceptConfig;
@@ -69,8 +97,14 @@ import im.zego.zim.entity.ZIMCallRejectConfig;
 import im.zego.zim.entity.ZIMCallUserStateChangeInfo;
 import im.zego.zim.entity.ZIMCallingInvitationSentInfo;
 import im.zego.zim.entity.ZIMCallingInviteConfig;
+import im.zego.zim.entity.ZIMCombineMessage;
 import im.zego.zim.entity.ZIMCommandMessage;
+import im.zego.zim.entity.ZIMConversation;
 import im.zego.zim.entity.ZIMConversationChangeInfo;
+import im.zego.zim.entity.ZIMConversationDeleteConfig;
+import im.zego.zim.entity.ZIMConversationFilterOption;
+import im.zego.zim.entity.ZIMConversationQueryConfig;
+import im.zego.zim.entity.ZIMConversationTotalUnreadMessageCountQueryConfig;
 import im.zego.zim.entity.ZIMConversationsAllDeletedInfo;
 import im.zego.zim.entity.ZIMError;
 import im.zego.zim.entity.ZIMErrorUserInfo;
@@ -80,13 +114,20 @@ import im.zego.zim.entity.ZIMGroupApplicationInfo;
 import im.zego.zim.entity.ZIMGroupAttributesUpdateInfo;
 import im.zego.zim.entity.ZIMGroupFullInfo;
 import im.zego.zim.entity.ZIMGroupMemberInfo;
+import im.zego.zim.entity.ZIMGroupMemberQueryConfig;
 import im.zego.zim.entity.ZIMGroupMuteInfo;
 import im.zego.zim.entity.ZIMGroupOperatedInfo;
 import im.zego.zim.entity.ZIMGroupVerifyInfo;
+import im.zego.zim.entity.ZIMMediaMessage;
 import im.zego.zim.entity.ZIMMessage;
+import im.zego.zim.entity.ZIMMessageDeleteConfig;
 import im.zego.zim.entity.ZIMMessageDeletedInfo;
+import im.zego.zim.entity.ZIMMessageQueryConfig;
 import im.zego.zim.entity.ZIMMessageReaction;
+import im.zego.zim.entity.ZIMMessageReactionUserInfo;
+import im.zego.zim.entity.ZIMMessageReactionUserQueryConfig;
 import im.zego.zim.entity.ZIMMessageReceiptInfo;
+import im.zego.zim.entity.ZIMMessageRevokeConfig;
 import im.zego.zim.entity.ZIMMessageRootRepliedCountInfo;
 import im.zego.zim.entity.ZIMMessageSendConfig;
 import im.zego.zim.entity.ZIMMessageSentStatusChangeInfo;
@@ -113,6 +154,7 @@ import im.zego.zim.entity.ZIMUsersInfoQueryConfig;
 import im.zego.zim.enums.ZIMBlacklistChangeAction;
 import im.zego.zim.enums.ZIMConnectionEvent;
 import im.zego.zim.enums.ZIMConnectionState;
+import im.zego.zim.enums.ZIMConversationNotificationStatus;
 import im.zego.zim.enums.ZIMConversationType;
 import im.zego.zim.enums.ZIMErrorCode;
 import im.zego.zim.enums.ZIMFriendApplicationListChangeAction;
@@ -122,11 +164,10 @@ import im.zego.zim.enums.ZIMGroupEvent;
 import im.zego.zim.enums.ZIMGroupMemberEvent;
 import im.zego.zim.enums.ZIMGroupMemberState;
 import im.zego.zim.enums.ZIMGroupState;
+import im.zego.zim.enums.ZIMMediaFileType;
 import im.zego.zim.enums.ZIMRoomAttributesUpdateAction;
 import im.zego.zim.enums.ZIMRoomEvent;
 import im.zego.zim.enums.ZIMRoomState;
-import im.zego.zpns.ZPNsManager;
-import im.zego.zpns.util.ZPNsConfig;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -140,23 +181,27 @@ import timber.log.Timber;
 
 public class ZegoSignalingPluginService {
 
-    private Application application;
-    private boolean notifyWhenAppRunningInBackgroundOrQuit;
     private NotifyList<ZegoSignalingPluginEventHandler> signalingPluginEventHandlerNotifyList = new NotifyList<>();
     private NotifyList<ZIMEventHandler> zimEventHandlerNotifyList = new NotifyList<>();
     private final AtomicBoolean isZIMInited = new AtomicBoolean();
 
-    private ZPNsConfig zpnsConfig = new ZPNsConfig();
-
     private ZIMUserRepository userRepository;
     private ZIMRoomRepository roomRepository;
     private ZIMCallRepository callRepository;
+    private ZPNSRepository zpnsRepository;
+    private ZIMMessageRepository messageRepository;
+    private ZIMGroupRepository groupRepository;
+    private ZIMConversationRepository conversationRepository;
     private ZIMEventHandler zimEventHandler;
 
     public ZegoSignalingPluginService() {
-        userRepository = new ZIMUserRepository();
+        groupRepository = new ZIMGroupRepository();
+        userRepository = new ZIMUserRepository(groupRepository);
         roomRepository = new ZIMRoomRepository();
         callRepository = new ZIMCallRepository(userRepository);
+        zpnsRepository = new ZPNSRepository(userRepository);
+        conversationRepository = new ZIMConversationRepository();
+        messageRepository = new ZIMMessageRepository(userRepository);
 
         zimEventHandler = new ZIMEventHandler() {
             @Override
@@ -282,6 +327,8 @@ public class ZegoSignalingPluginService {
             @Override
             public void onBroadcastMessageReceived(ZIM zim, ZIMMessage message) {
                 super.onBroadcastMessageReceived(zim, message);
+                Timber.d("onBroadcastMessageReceived() called with: zim = [" + zim + "], message = [" + message + "]");
+                messageRepository.onBroadcastMessageReceived(zim, message);
                 zimEventHandlerNotifyList.notifyAllListener(handler -> {
                     handler.onBroadcastMessageReceived(zim, message);
                 });
@@ -290,6 +337,7 @@ public class ZegoSignalingPluginService {
             @Override
             public void onMessageRepliedCountChanged(ZIM zim, ArrayList<ZIMMessageRootRepliedCountInfo> infos) {
                 super.onMessageRepliedCountChanged(zim, infos);
+                messageRepository.onMessageRepliedCountChanged(zim, infos);
                 zimEventHandlerNotifyList.notifyAllListener(handler -> {
                     handler.onMessageRepliedCountChanged(zim, infos);
                 });
@@ -298,6 +346,7 @@ public class ZegoSignalingPluginService {
             @Override
             public void onMessageRepliedInfoChanged(ZIM zim, ArrayList<ZIMMessage> messageList) {
                 super.onMessageRepliedInfoChanged(zim, messageList);
+                messageRepository.onMessageRepliedInfoChanged(zim, messageList);
                 zimEventHandlerNotifyList.notifyAllListener(handler -> {
                     handler.onMessageRepliedInfoChanged(zim, messageList);
                 });
@@ -342,6 +391,7 @@ public class ZegoSignalingPluginService {
             @Override
             public void onMessageDeleted(ZIM zim, ZIMMessageDeletedInfo deletedInfo) {
                 super.onMessageDeleted(zim, deletedInfo);
+                messageRepository.onMessageDeleted(zim, deletedInfo);
                 zimEventHandlerNotifyList.notifyAllListener(handler -> {
                     handler.onMessageDeleted(zim, deletedInfo);
                 });
@@ -360,6 +410,10 @@ public class ZegoSignalingPluginService {
             public void onMessageSentStatusChanged(ZIM zim,
                 ArrayList<ZIMMessageSentStatusChangeInfo> messageSentStatusChangeInfoList) {
                 super.onMessageSentStatusChanged(zim, messageSentStatusChangeInfoList);
+                Timber.d(
+                    "onMessageSentStatusChanged() called with: zim = [" + zim + "], messageSentStatusChangeInfoList = ["
+                        + messageSentStatusChangeInfoList + "]");
+                messageRepository.onMessageSentStatusChanged(zim, messageSentStatusChangeInfoList);
                 zimEventHandlerNotifyList.notifyAllListener(handler -> {
                     handler.onMessageSentStatusChanged(zim, messageSentStatusChangeInfoList);
                 });
@@ -384,6 +438,9 @@ public class ZegoSignalingPluginService {
             @Override
             public void onMessageReactionsChanged(ZIM zim, ArrayList<ZIMMessageReaction> reactions) {
                 super.onMessageReactionsChanged(zim, reactions);
+                Timber.d(
+                    "onMessageReactionsChanged() called with: zim = [" + zim + "], reactions = [" + reactions + "]");
+                messageRepository.onMessageReactionsChanged(zim, reactions);
                 zimEventHandlerNotifyList.notifyAllListener(handler -> {
                     handler.onMessageReactionsChanged(zim, reactions);
                 });
@@ -392,6 +449,7 @@ public class ZegoSignalingPluginService {
             @Override
             public void onMessageReceiptChanged(ZIM zim, ArrayList<ZIMMessageReceiptInfo> infos) {
                 super.onMessageReceiptChanged(zim, infos);
+                messageRepository.onMessageReceiptChanged(zim, infos);
                 zimEventHandlerNotifyList.notifyAllListener(handler -> {
                     handler.onMessageReceiptChanged(zim, infos);
                 });
@@ -400,6 +458,7 @@ public class ZegoSignalingPluginService {
             @Override
             public void onMessageRevokeReceived(ZIM zim, ArrayList<ZIMRevokeMessage> messageList) {
                 super.onMessageRevokeReceived(zim, messageList);
+                messageRepository.onMessageRevokeReceived(zim, messageList);
                 zimEventHandlerNotifyList.notifyAllListener(handler -> {
                     handler.onMessageRevokeReceived(zim, messageList);
                 });
@@ -470,6 +529,7 @@ public class ZegoSignalingPluginService {
             @Override
             public void onTokenWillExpire(ZIM zim, int second) {
                 super.onTokenWillExpire(zim, second);
+                userRepository.onTokenWillExpire(zim, second);
                 zimEventHandlerNotifyList.notifyAllListener(handler -> {
                     handler.onTokenWillExpire(zim, second);
                 });
@@ -541,6 +601,10 @@ public class ZegoSignalingPluginService {
             @Override
             public void onReceiveRoomMessage(ZIM zim, ArrayList<ZIMMessage> messageList, String fromRoomID) {
                 super.onReceiveRoomMessage(zim, messageList, fromRoomID);
+                Timber.d("onReceiveRoomMessage() called with: zim = [" + zim + "], messageList = [" + messageList
+                    + "], fromRoomID = [" + fromRoomID + "]");
+                messageRepository.onReceiveRoomMessage(zim, messageList, fromRoomID);
+
                 zimEventHandlerNotifyList.notifyAllListener(handler -> {
                     handler.onReceiveRoomMessage(zim, messageList, fromRoomID);
                 });
@@ -780,6 +844,10 @@ public class ZegoSignalingPluginService {
             @Override
             public void onReceiveGroupMessage(ZIM zim, ArrayList<ZIMMessage> messageList, String fromGroupID) {
                 super.onReceiveGroupMessage(zim, messageList, fromGroupID);
+                Timber.d("onReceiveGroupMessage() called with: zim = [" + zim + "], messageList = [" + messageList
+                    + "], fromGroupID = [" + fromGroupID + "]");
+                messageRepository.onReceiveGroupMessage(zim, messageList, fromGroupID);
+
                 zimEventHandlerNotifyList.notifyAllListener(handler -> {
                     handler.onReceiveGroupMessage(zim, messageList, fromGroupID);
                 });
@@ -788,6 +856,9 @@ public class ZegoSignalingPluginService {
             @Override
             public void onReceivePeerMessage(ZIM zim, ArrayList<ZIMMessage> messageList, String fromUserID) {
                 super.onReceivePeerMessage(zim, messageList, fromUserID);
+                Timber.d("onReceivePeerMessage() called with: zim = [" + zim + "], messageList = [" + messageList
+                    + "], fromUserID = [" + fromUserID + "]");
+                messageRepository.onReceivePeerMessage(zim, messageList, fromUserID);
                 zimEventHandlerNotifyList.notifyAllListener(handler -> {
                     handler.onReceivePeerMessage(zim, messageList, fromUserID);
                 });
@@ -798,7 +869,6 @@ public class ZegoSignalingPluginService {
     public void init(Application application, Long appID, String appSign) {
         Timber.d("ZIM init() called with: application = [" + application + "], appID = [" + appID + "], isZIMInited = ["
             + isZIMInited.get() + "]");
-        this.application = application;
         boolean result = isZIMInited.compareAndSet(false, true);
         if (!result) {
             return;
@@ -809,6 +879,7 @@ public class ZegoSignalingPluginService {
         ZIM.create(zimAppConfig, application);
 
         setEventHandler(zimEventHandler);
+        zpnsRepository.setApplication(application);
     }
 
     public void setEventHandler(ZIMEventHandler zimEventHandler) {
@@ -847,14 +918,14 @@ public class ZegoSignalingPluginService {
 
 
     public void renewToken(String token, RenewTokenCallback callback) {
-        if (ZIM.getInstance() == null) {
-            return;
-        }
-        ZIM.getInstance().renewToken(token, new ZIMTokenRenewedCallback() {
-
-            public void onTokenRenewed(String token, ZIMError errorInfo) {
+        Timber.d("renewToken() called with: token = [" + token + "], callback = [" + callback + "]");
+        userRepository.renewToken(token, new RenewTokenCallback() {
+            @Override
+            public void onResult(int errorCode, String errorMessage) {
+                Timber.d(
+                    "onResult() called with: errorCode = [" + errorCode + "], errorMessage = [" + errorMessage + "]");
                 if (callback != null) {
-                    callback.onResult(errorInfo.code.value(), errorInfo.message);
+                    callback.onResult(errorCode, errorMessage);
                 }
             }
         });
@@ -1281,14 +1352,29 @@ public class ZegoSignalingPluginService {
     }
 
 
-    public void sendRoomMessage(String text, String roomID, SendRoomMessageCallback callback) {
-        if (ZIM.getInstance() == null) {
-            return;
-        }
+    public void sendRoomTextMessage(String text, String roomID, SendRoomMessageCallback callback) {
         ZIMTextMessage textMessage = new ZIMTextMessage(text);
         ZIMMessageSendConfig config = new ZIMMessageSendConfig();
-        ZIM.getInstance()
-            .sendMessage(textMessage, roomID, ZIMConversationType.ROOM, config, new ZIMMessageSentCallback() {
+        sendMessage(textMessage, roomID, ZIMConversationType.ROOM, config, new ZIMMessageSentCallback() {
+            @Override
+            public void onMessageAttached(ZIMMessage message) {
+
+            }
+
+            @Override
+            public void onMessageSent(ZIMMessage message, ZIMError errorInfo) {
+                if (callback != null) {
+                    callback.onResult(errorInfo.code.value(), errorInfo.message);
+                }
+            }
+        });
+    }
+
+    public void sendRoomCommandMessage(String command, String roomID, SendRoomMessageCallback callback) {
+        byte[] bytes = command.getBytes(StandardCharsets.UTF_8);
+        ZIMCommandMessage commandMessage = new ZIMCommandMessage(bytes);
+        sendMessage(commandMessage, roomID, ZIMConversationType.ROOM, new ZIMMessageSendConfig(),
+            new ZIMMessageSentCallback() {
                 @Override
                 public void onMessageAttached(ZIMMessage message) {
 
@@ -1303,23 +1389,63 @@ public class ZegoSignalingPluginService {
             });
     }
 
-    public void sendInRoomCommandMessage(String command, String roomID, SendRoomMessageCallback callback) {
-        if (ZIM.getInstance() == null) {
-            return;
-        }
-        byte[] bytes = command.getBytes(StandardCharsets.UTF_8);
-        ZIMCommandMessage commandMessage = new ZIMCommandMessage(bytes);
-        ZIM.getInstance().sendMessage(commandMessage, roomID, ZIMConversationType.ROOM, new ZIMMessageSendConfig(),
+    public void sendMessage(ZIMMessage message, String toConversationID, ZIMConversationType conversationType,
+        ZIMMessageSendConfig config, ZIMMessageSentCallback callback) {
+        Timber.d("sendMessage() called with: message = [" + message + "], toConversationID = [" + toConversationID
+            + "], conversationType = [" + conversationType + "], config = [" + config + "], callback = [" + callback
+            + "]");
+        messageRepository.sendMessage(message, toConversationID, conversationType, config,
             new ZIMMessageSentCallback() {
                 @Override
                 public void onMessageAttached(ZIMMessage message) {
-
+                    Timber.d("sendMessage onMessageAttached() called with: message = [" + message + "]");
+                    if (callback != null) {
+                        callback.onMessageAttached(message);
+                    }
                 }
 
                 @Override
                 public void onMessageSent(ZIMMessage message, ZIMError errorInfo) {
+                    Timber.d("sendMessage onMessageSent() called with: message = [" + message + "], errorInfo = ["
+                        + errorInfo + "]");
                     if (callback != null) {
-                        callback.onResult(errorInfo.code.value(), errorInfo.message);
+                        callback.onMessageSent(message, errorInfo);
+                    }
+                }
+            });
+    }
+
+    public void sendMediaMessage(ZIMMediaMessage message, String toConversationID, ZIMConversationType conversationType,
+        ZIMMessageSendConfig config, ZIMMediaMessageSentCallback callback) {
+        Timber.d("sendMediaMessage() called with: message = [" + message + "], toConversationID = [" + toConversationID
+            + "], conversationType = [" + conversationType + "], config = [" + config + "], callback = [" + callback
+            + "]");
+        messageRepository.sendMediaMessage(message, toConversationID, conversationType, config,
+            new ZIMMediaMessageSentCallback() {
+                @Override
+                public void onMessageAttached(ZIMMediaMessage message) {
+                    Timber.d("sendMediaMessage onMessageAttached() called with: message = [" + message + "]");
+                    if (callback != null) {
+                        callback.onMessageAttached(message);
+                    }
+                }
+
+                @Override
+                public void onMediaUploadingProgress(ZIMMediaMessage message, long currentFileSize,
+                    long totalFileSize) {
+                    Timber.d("sendMediaMessage onMediaUploadingProgress() called with: message = [" + message
+                        + "], currentFileSize = [" + currentFileSize + "], totalFileSize = [" + totalFileSize + "]");
+                    if (callback != null) {
+                        callback.onMediaUploadingProgress(message, currentFileSize, totalFileSize);
+                    }
+                }
+
+                @Override
+                public void onMessageSent(ZIMMediaMessage message, ZIMError errorInfo) {
+                    Timber.d("sendMediaMessage onMessageSent() called with: message = [" + message + "], errorInfo = ["
+                        + errorInfo + "]");
+                    if (callback != null) {
+                        callback.onMessageSent(message, errorInfo);
                     }
                 }
             });
@@ -1339,80 +1465,51 @@ public class ZegoSignalingPluginService {
     }
 
     public void enableFCMPush() {
-        zpnsConfig.enableFCMPush();
-        ZPNsManager.setPushConfig(zpnsConfig);
+        zpnsRepository.enableFCMPush();
     }
 
     public void disableFCMPush() {
-        zpnsConfig.disableFCMPush();
-        ZPNsManager.setPushConfig(zpnsConfig);
+        zpnsRepository.disableFCMPush();
     }
 
     public void enableHWPush(String hwAppID) {
-        zpnsConfig.enableHWPush(hwAppID);
-        ZPNsManager.setPushConfig(zpnsConfig);
+        zpnsRepository.enableHWPush(hwAppID);
     }
 
     public void enableMiPush(String miAppID, String miAppKey) {
-        zpnsConfig.enableMiPush(miAppID, miAppKey);
-        ZPNsManager.setPushConfig(zpnsConfig);
+        zpnsRepository.enableMiPush(miAppID, miAppKey);
     }
 
     public void enableVivoPush(String vivoAppID, String vivoAppKey) {
-        zpnsConfig.enableVivoPush(vivoAppID, vivoAppKey);
-        ZPNsManager.setPushConfig(zpnsConfig);
+        zpnsRepository.enableVivoPush(vivoAppID, vivoAppKey);
     }
 
     public void enableOppoPush(String oppoAppID, String oppoAppKey, String oppoAppSecret) {
-        zpnsConfig.enableOppoPush(oppoAppID, oppoAppKey, oppoAppSecret);
-        ZPNsManager.setPushConfig(zpnsConfig);
+        zpnsRepository.enableOppoPush(oppoAppID, oppoAppKey, oppoAppSecret);
     }
 
     public void setAppType(int appType) {
-        zpnsConfig.setAppType(appType);
-        ZPNsManager.setPushConfig(zpnsConfig);
+        zpnsRepository.setAppType(appType);
     }
 
     public boolean isOtherPushEnabled() {
-        return zpnsConfig.enableHWPush || zpnsConfig.enableMiPush || zpnsConfig.enableOppoPush
-            || zpnsConfig.enableVivoPush;
+        return zpnsRepository.isOtherPushEnabled();
     }
 
     public boolean isFCMPushEnabled() {
-        return zpnsConfig.enableFCMPush;
+        return zpnsRepository.isFCMPushEnabled();
     }
 
     public void registerPush() {
-        try {
-            // if without fcm integrated,will throw exception,so need try/catch
-            ZPNsManager.getInstance().registerPush(application);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        zpnsRepository.registerPush();
     }
 
     public void unregisterPush() {
-        try {
-            ZPNsManager.getInstance().unregisterPush();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        zpnsRepository.unregisterPush();
     }
 
     public void enableNotifyWhenAppRunningInBackgroundOrQuit(boolean enable) {
-        this.notifyWhenAppRunningInBackgroundOrQuit = enable;
-        try {
-            if (enable) {
-                ZPNsConfig zpnsConfig = new ZPNsConfig();
-                zpnsConfig.enableFCMPush(); // FCM
-                ZPNsManager.setPushConfig(zpnsConfig);
-                ZPNsManager.getInstance().registerPush(application);
-            } else {
-                ZPNsManager.getInstance().unregisterPush();
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        zpnsRepository.enableNotifyWhenAppRunningInBackgroundOrQuit(enable);
     }
 
     public ZIMCallInfo getZIMCallInfo(String callID) {
@@ -1452,5 +1549,367 @@ public class ZegoSignalingPluginService {
 
     public ZIMUserFullInfo getMemoryUserInfo(String userID) {
         return userRepository.getMemoryUserInfo(userID);
+    }
+
+    public void replyMessage(ZIMMessage message, ZIMMessage repliedMessage, ZIMMessageSendConfig config,
+        ZIMMessageSentFullCallback callback) {
+        Timber.d("replyMessage() called with: message = [" + message + "], repliedMessage = [" + repliedMessage
+            + "], config = [" + config + "], callback = [" + callback + "]");
+        messageRepository.replyMessage(message, repliedMessage, config, new ZIMMessageSentFullCallback() {
+            @Override
+            public void onMessageAttached(ZIMMessage message) {
+                Timber.d("replyMessage() onMessageAttached() called with: message = [" + message + "]");
+                if (callback != null) {
+                    callback.onMessageAttached(message);
+                }
+            }
+
+            @Override
+            public void onMessageSent(ZIMMessage message, ZIMError errorInfo) {
+                Timber.d(
+                    "replyMessage() result called with : message = [" + message + "], errorInfo = [" + errorInfo + "]");
+                if (callback != null) {
+                    callback.onMessageSent(message, errorInfo);
+                }
+            }
+
+            @Override
+            public void onMediaUploadingProgress(ZIMMessage message, long currentFileSize, long totalFileSize) {
+                Timber.d("replyMessage() onMediaUploadingProgress() called with: message = [" + message
+                    + "], currentFileSize = [" + currentFileSize + "], totalFileSize = [" + totalFileSize + "]");
+                if (callback != null) {
+                    callback.onMediaUploadingProgress(message, currentFileSize, totalFileSize);
+                }
+            }
+        });
+    }
+
+    public void queryHistoryMessage(String conversationID, ZIMConversationType conversationType,
+        ZIMMessageQueryConfig config, ZIMMessageQueriedCallback callback) {
+        Timber.d("queryHistoryMessage() called with: conversationID = [" + conversationID + "], conversationType = ["
+            + conversationType + "], config = [" + config + "], callback = [" + callback + "]");
+        messageRepository.queryHistoryMessage(conversationID, conversationType, config,
+            new ZIMMessageQueriedCallback() {
+                @Override
+                public void onMessageQueried(String conversationID, ZIMConversationType conversationType,
+                    ArrayList<ZIMMessage> messageList, ZIMError errorInfo) {
+                    Timber.d("queryHistoryMessage onMessageQueried() called with: conversationID = [" + conversationID
+                        + "], conversationType = [" + conversationType + "], messageList = [" + messageList
+                        + "], errorInfo = [" + errorInfo + "]");
+                    if (callback != null) {
+                        callback.onMessageQueried(conversationID, conversationType, messageList, errorInfo);
+                    }
+                }
+            });
+    }
+
+    public void deleteMessages(List<ZIMMessage> messageList, String conversationID,
+        ZIMConversationType conversationType, ZIMMessageDeleteConfig config, ZIMMessageDeletedCallback callback) {
+        Timber.d(
+            "deleteMessages() called with: messageList = [" + messageList + "], conversationID = [" + conversationID
+                + "], conversationType = [" + conversationType + "], config = [" + config + "], callback = [" + callback
+                + "]");
+        messageRepository.deleteMessages(messageList, conversationID, conversationType, config,
+            new ZIMMessageDeletedCallback() {
+                @Override
+                public void onMessageDeleted(String conversationID, ZIMConversationType conversationType,
+                    ZIMError errorInfo) {
+                    Timber.d("deleteMessages onMessageDeleted() called with: conversationID = [" + conversationID
+                        + "], conversationType = [" + conversationType + "], errorInfo = [" + errorInfo + "]");
+                    if (callback != null) {
+                        callback.onMessageDeleted(conversationID, conversationType, errorInfo);
+                    }
+                }
+            });
+    }
+
+    public void revokeMessage(ZIMMessage message, ZIMMessageRevokeConfig config, ZIMMessageRevokedCallback callback) {
+        Timber.d("revokeMessage() called with: message = [" + message + "], config = [" + config + "], callback = ["
+            + callback + "]");
+        messageRepository.revokeMessage(message, config, new ZIMMessageRevokedCallback() {
+            @Override
+            public void onMessageRevoked(ZIMMessage message, ZIMError errorInfo) {
+                Timber.d("revokeMessage onMessageRevoked() called with: message = [" + message + "], errorInfo = ["
+                    + errorInfo + "]");
+                if (callback != null) {
+                    callback.onMessageRevoked(message, errorInfo);
+                }
+            }
+        });
+    }
+
+    public void downloadMediaFile(ZIMMediaMessage message, ZIMMediaFileType type, ZIMMediaDownloadedCallback callback) {
+        Timber.d("downloadMediaFile() called with: message = [" + message + "], type = [" + type + "], callback = ["
+            + callback + "]");
+        messageRepository.downloadMediaFile(message, type, new ZIMMediaDownloadedCallback() {
+            @Override
+            public void onMediaDownloaded(ZIMMediaMessage message, ZIMError errorInfo) {
+                Timber.d("downloadMediaFile onMediaDownloaded() called with: message = [" + message + "], errorInfo = ["
+                    + errorInfo + "]");
+                if (callback != null) {
+                    callback.onMediaDownloaded(message, errorInfo);
+                }
+            }
+
+            @Override
+            public void onMediaDownloadingProgress(ZIMMediaMessage message, long currentFileSize, long totalFileSize) {
+                Timber.d("downloadMediaFile onMediaDownloadingProgress() called with: message = [" + message
+                    + "], currentFileSize = [" + currentFileSize + "], totalFileSize = [" + totalFileSize + "]");
+                if (callback != null) {
+                    callback.onMediaDownloadingProgress(message, currentFileSize, totalFileSize);
+                }
+            }
+        });
+    }
+
+    public void updateUserAvatarUrl(String userAvatarUrl, ZIMUserAvatarUrlUpdatedCallback callback) {
+        Timber.d("updateUserAvatarUrl() called with: userAvatarUrl = [" + userAvatarUrl + "], callback = [" + callback
+            + "]");
+        userRepository.updateUserAvatarUrl(userAvatarUrl, new ZIMUserAvatarUrlUpdatedCallback() {
+            @Override
+            public void onUserAvatarUrlUpdated(String userAvatarUrl, ZIMError errorInfo) {
+                Timber.d("updateUserAvatarUrl onUserAvatarUrlUpdated() called with: userAvatarUrl = [" + userAvatarUrl
+                    + "], errorInfo = [" + errorInfo + "]");
+                if (callback != null) {
+                    callback.onUserAvatarUrlUpdated(userAvatarUrl, errorInfo);
+                }
+            }
+        });
+    }
+
+    public void addMessageReaction(String reactionType, ZIMMessage message, ZIMMessageReactionAddedCallback callback) {
+        Timber.d("addMessageReaction() called with: reactionType = [" + reactionType + "], message = [" + message
+            + "], callback = [" + callback + "]");
+        messageRepository.addMessageReaction(reactionType, message, new ZIMMessageReactionAddedCallback() {
+            @Override
+            public void onMessageReactionAdded(ZIMMessageReaction reaction, ZIMError error) {
+                Timber.d(
+                    "addMessageReaction onMessageReactionAdded() called with: reaction = [" + reaction + "], error = ["
+                        + error + "]");
+                if (callback != null) {
+                    callback.onMessageReactionAdded(reaction, error);
+                }
+            }
+        });
+    }
+
+    public void deleteMessageReaction(String reactionType, ZIMMessage message,
+        ZIMMessageReactionDeletedCallback callback) {
+        Timber.d("deleteMessageReaction() called with: reactionType = [" + reactionType + "], message = [" + message
+            + "], callback = [" + callback + "]");
+        messageRepository.deleteMessageReaction(reactionType, message, new ZIMMessageReactionDeletedCallback() {
+            @Override
+            public void onMessageReactionDeleted(ZIMMessageReaction reaction, ZIMError error) {
+                Timber.d(
+                    "onMessageReactionDeleted() called with: reaction = [" + reaction + "], error = [" + error + "]");
+                if (callback != null) {
+                    callback.onMessageReactionDeleted(reaction, error);
+                }
+            }
+        });
+    }
+
+    public void queryMessageReactionUserList(ZIMMessage message, ZIMMessageReactionUserQueryConfig config,
+        ZIMMessageReactionUserListQueriedCallback callback) {
+        Timber.d("queryMessageReactionUserList() called with: message = [" + message + "], config = [" + config
+            + "], callback = [" + callback + "]");
+        messageRepository.queryMessageReactionUserList(message, config,
+            new ZIMMessageReactionUserListQueriedCallback() {
+                @Override
+                public void onMessageReactionUserListQueried(ZIMMessage message,
+                    ArrayList<ZIMMessageReactionUserInfo> userList, String reactionType, long nextFlag, int totalCount,
+                    ZIMError error) {
+                    Timber.d("onMessageReactionUserListQueried() called with: message = [" + message + "], userList = ["
+                        + userList + "], reactionType = [" + reactionType + "], nextFlag = [" + nextFlag
+                        + "], totalCount = [" + totalCount + "], error = [" + error + "]");
+                    if (callback != null) {
+                        callback.onMessageReactionUserListQueried(message, userList, reactionType, nextFlag, totalCount,
+                            error);
+                    }
+                }
+            });
+    }
+
+    public void queryGroupMemberInfo(String userID, String groupID, ZIMGroupMemberInfoQueriedCallback callback) {
+        Timber.d(
+            "queryGroupMemberInfo() called with: userID = [" + userID + "], groupID = [" + groupID + "], callback = ["
+                + callback + "]");
+        groupRepository.queryGroupMemberInfo(userID, groupID, new ZIMGroupMemberInfoQueriedCallback() {
+            @Override
+            public void onGroupMemberInfoQueried(String groupID, ZIMGroupMemberInfo userInfo, ZIMError errorInfo) {
+                Timber.d("onGroupMemberInfoQueried() called with: groupID = [" + groupID + "], userInfo = [" + userInfo
+                    + "], errorInfo = [" + errorInfo + "]");
+                if (callback != null) {
+                    callback.onGroupMemberInfoQueried(groupID, userInfo, errorInfo);
+                }
+            }
+        });
+    }
+
+    public void queryGroupMemberList(String groupID, ZIMGroupMemberQueryConfig config,
+        ZIMGroupMemberListQueriedCallback callback) {
+        Timber.d(
+            "queryGroupMemberList() called with: groupID = [" + groupID + "], config = [" + config + "], callback = ["
+                + callback + "]");
+        groupRepository.queryGroupMemberList(groupID, config, new ZIMGroupMemberListQueriedCallback() {
+            @Override
+            public void onGroupMemberListQueried(String groupID, ArrayList<ZIMGroupMemberInfo> userList, int nextFlag,
+                ZIMError errorInfo) {
+                Timber.d("onGroupMemberListQueried() called with: groupID = [" + groupID + "], userList = [" + userList
+                    + "], nextFlag = [" + nextFlag + "], errorInfo = [" + errorInfo + "]");
+                if (callback != null) {
+                    callback.onGroupMemberListQueried(groupID, userList, nextFlag, errorInfo);
+                }
+            }
+        });
+    }
+
+    public void queryConversationList(ZIMConversationQueryConfig config, ZIMConversationListQueriedCallback callback) {
+        Timber.d("queryConversationList() called with: config = [" + config + "], callback = [" + callback + "]");
+        conversationRepository.queryConversationList(config, new ZIMConversationListQueriedCallback() {
+            @Override
+            public void onConversationListQueried(ArrayList<ZIMConversation> conversationList, ZIMError errorInfo) {
+                Timber.d("onConversationListQueried() called with: conversationList = [" + conversationList
+                    + "], errorInfo = [" + errorInfo + "]");
+                if (callback != null) {
+                    callback.onConversationListQueried(conversationList, errorInfo);
+                }
+            }
+        });
+    }
+
+    public void queryConversationList(ZIMConversationQueryConfig config, ZIMConversationFilterOption option,
+        ZIMConversationListQueriedCallback callback) {
+        Timber.d(
+            "queryConversationList() called with: config = [" + config + "], option = [" + option + "], callback = ["
+                + callback + "]");
+        conversationRepository.queryConversationList(config, option, new ZIMConversationListQueriedCallback() {
+            @Override
+            public void onConversationListQueried(ArrayList<ZIMConversation> conversationList, ZIMError errorInfo) {
+                Timber.d("onConversationListQueried() called with: conversationList = [" + conversationList
+                    + "], errorInfo = [" + errorInfo + "]");
+                if (callback != null) {
+                    callback.onConversationListQueried(conversationList, errorInfo);
+                }
+            }
+        });
+    }
+
+
+    public void queryConversation(String conversationID, ZIMConversationType conversationType,
+        ZIMConversationQueriedCallback callback) {
+        conversationRepository.queryConversation(conversationID, conversationType, callback);
+    }
+
+    public void queryConversationPinnedList(ZIMConversationQueryConfig config,
+        ZIMConversationPinnedListQueriedCallback callback) {
+        conversationRepository.queryConversationPinnedList(config, callback);
+    }
+
+    public void queryConversationTotalUnreadMessageCount(ZIMConversationTotalUnreadMessageCountQueryConfig config,
+        ZIMConversationTotalUnreadMessageCountQueriedCallback callback) {
+        conversationRepository.queryConversationTotalUnreadMessageCount(config, callback);
+    }
+
+    public void updateConversationPinnedState(boolean isPinned, String conversationID,
+        ZIMConversationType conversationType, ZIMConversationPinnedStateUpdatedCallback callback) {
+        Timber.d("updateConversationPinnedState() called with: isPinned = [" + isPinned + "], conversationID = ["
+            + conversationID + "], conversationType = [" + conversationType + "], callback = [" + callback + "]");
+        conversationRepository.updateConversationPinnedState(isPinned, conversationID, conversationType,
+            new ZIMConversationPinnedStateUpdatedCallback() {
+                @Override
+                public void onConversationPinnedStateUpdated(String conversationID,
+                    ZIMConversationType conversationType, ZIMError errorInfo) {
+                    Timber.d("onConversationPinnedStateUpdated() called with: conversationID = [" + conversationID
+                        + "], conversationType = [" + conversationType + "], errorInfo = [" + errorInfo + "]");
+                    if (callback != null) {
+                        callback.onConversationPinnedStateUpdated(conversationID, conversationType, errorInfo);
+                    }
+                }
+            });
+    }
+
+    public void deleteConversation(String conversationID, ZIMConversationType conversationType,
+        ZIMConversationDeleteConfig config, ZIMConversationDeletedCallback callback) {
+        Timber.d("deleteConversation() called with: conversationID = [" + conversationID + "], conversationType = ["
+            + conversationType + "], config = [" + config + "], callback = [" + callback + "]");
+        conversationRepository.deleteConversation(conversationID, conversationType, config,
+            new ZIMConversationDeletedCallback() {
+                @Override
+                public void onConversationDeleted(String conversationID, ZIMConversationType conversationType,
+                    ZIMError errorInfo) {
+                    Timber.d("onConversationDeleted() called with: conversationID = [" + conversationID
+                        + "], conversationType = [" + conversationType + "], errorInfo = [" + errorInfo + "]");
+                    if (callback != null) {
+                        callback.onConversationDeleted(conversationID, conversationType, errorInfo);
+                    }
+                }
+            });
+    }
+
+    public void deleteAllConversations(ZIMConversationDeleteConfig config,
+        ZIMConversationsAllDeletedCallback callback) {
+        conversationRepository.deleteAllConversations(config, callback);
+    }
+
+    public void clearConversationUnreadMessageCount(String conversationID, ZIMConversationType conversationType,
+        ZIMConversationUnreadMessageCountClearedCallback callback) {
+        Timber.d("clearConversationUnreadMessageCount() called with: conversationID = [" + conversationID
+            + "], conversationType = [" + conversationType + "], callback = [" + callback + "]");
+        conversationRepository.clearConversationUnreadMessageCount(conversationID, conversationType,
+            new ZIMConversationUnreadMessageCountClearedCallback() {
+                @Override
+                public void onConversationUnreadMessageCountCleared(String conversationID,
+                    ZIMConversationType conversationType, ZIMError errorInfo) {
+                    Timber.d(
+                        "onConversationUnreadMessageCountCleared() called with: conversationID = [" + conversationID
+                            + "], conversationType = [" + conversationType + "], errorInfo = [" + errorInfo + "]");
+                    if (callback != null) {
+                        callback.onConversationUnreadMessageCountCleared(conversationID, conversationType, errorInfo);
+                    }
+                }
+            });
+    }
+
+    public void clearConversationTotalUnreadMessageCount(
+        ZIMConversationTotalUnreadMessageCountClearedCallback callback) {
+        conversationRepository.clearConversationTotalUnreadMessageCount(callback);
+    }
+
+    public void setConversationNotificationStatus(ZIMConversationNotificationStatus status, String conversationID,
+        ZIMConversationType conversationType, ZIMConversationNotificationStatusSetCallback callback) {
+        Timber.d("setConversationNotificationStatus() called with: status = [" + status + "], conversationID = ["
+            + conversationID + "], conversationType = [" + conversationType + "], callback = [" + callback + "]");
+        conversationRepository.setConversationNotificationStatus(status, conversationID, conversationType,
+            new ZIMConversationNotificationStatusSetCallback() {
+                @Override
+                public void onConversationNotificationStatusSet(String conversationID,
+                    ZIMConversationType conversationType, ZIMError errorInfo) {
+                    Timber.d("onConversationNotificationStatusSet() called with: conversationID = [" + conversationID
+                        + "], conversationType = [" + conversationType + "], errorInfo = [" + errorInfo + "]");
+                    if (callback != null) {
+                        callback.onConversationNotificationStatusSet(conversationID, conversationType, errorInfo);
+                    }
+                }
+            });
+    }
+
+    public void sendConversationMessageReceiptRead(String conversationID, ZIMConversationType conversationType,
+        ZIMConversationMessageReceiptReadSentCallback callback) {
+        conversationRepository.sendConversationMessageReceiptRead(conversationID, conversationType, callback);
+    }
+
+    public void queryCombineMessageDetail(ZIMCombineMessage message, ZIMCombineMessageDetailQueriedCallback callback) {
+        Timber.d("queryCombineMessageDetail() called with: message = [" + message + "], callback = [" + callback + "]");
+        messageRepository.queryCombineMessageDetail(message, new ZIMCombineMessageDetailQueriedCallback() {
+            @Override
+            public void onCombineMessageDetailQueried(ZIMCombineMessage message, ZIMError error) {
+                Timber.d("onCombineMessageDetailQueried() called with: message = [" + message + "], error = [" + error
+                    + "]");
+                if (callback != null) {
+                    callback.onCombineMessageDetailQueried(message, error);
+                }
+            }
+        });
     }
 }

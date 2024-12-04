@@ -1,10 +1,15 @@
 package com.zegocloud.uikit.plugin.signaling.user;
 
+import com.zegocloud.uikit.plugin.adapter.plugins.signaling.RenewTokenCallback;
+import com.zegocloud.uikit.plugin.signaling.group.ZIMGroupRepository;
 import im.zego.zim.ZIM;
 import im.zego.zim.callback.ZIMLoggedInCallback;
+import im.zego.zim.callback.ZIMTokenRenewedCallback;
+import im.zego.zim.callback.ZIMUserAvatarUrlUpdatedCallback;
 import im.zego.zim.callback.ZIMUsersInfoQueriedCallback;
 import im.zego.zim.entity.ZIMError;
 import im.zego.zim.entity.ZIMErrorUserInfo;
+import im.zego.zim.entity.ZIMGroupMemberInfo;
 import im.zego.zim.entity.ZIMUserFullInfo;
 import im.zego.zim.entity.ZIMUserInfo;
 import im.zego.zim.entity.ZIMUserRule;
@@ -16,6 +21,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import org.json.JSONObject;
 
 public class ZIMUserRepository {
@@ -25,6 +31,11 @@ public class ZIMUserRepository {
     private ZIMConnectionState connectionState;
     private ZIMConnectionEvent connectionEvent;
     private Map<String, ZIMUserFullInfo> userFullInfoMap;
+    private ZIMGroupRepository groupRepository;
+
+    public ZIMUserRepository(ZIMGroupRepository groupRepository) {
+        this.groupRepository = groupRepository;
+    }
 
     public void login(ZIMUserInfo userInfo, String token, ZIMLoggedInCallback callback) {
         if (ZIM.getInstance() == null) {
@@ -75,6 +86,26 @@ public class ZIMUserRepository {
         clearLoginData();
     }
 
+    public void renewToken(String token, RenewTokenCallback callback) {
+        if (ZIM.getInstance() == null) {
+            if (callback != null) {
+                ZIMError errorInfo = new ZIMError();
+                errorInfo.code = ZIMErrorCode.NO_INIT;
+                errorInfo.message = ZIMErrorCode.NO_INIT.toString();
+                callback.onResult(errorInfo.code.value(), errorInfo.message);
+            }
+            return;
+        }
+        ZIM.getInstance().renewToken(token, new ZIMTokenRenewedCallback() {
+
+            public void onTokenRenewed(String token, ZIMError errorInfo) {
+                if (callback != null) {
+                    callback.onResult(errorInfo.code.value(), errorInfo.message);
+                }
+            }
+        });
+    }
+
     public ZIMUserInfo getUserInfo() {
         return zimUserInfo;
     }
@@ -98,10 +129,29 @@ public class ZIMUserRepository {
     }
 
     public ZIMUserFullInfo getMemoryUserInfo(String userID) {
+        // is self
+        if (zimUserInfo != null && Objects.equals(zimUserInfo.userID, userID)) {
+            ZIMUserFullInfo zimUserFullInfo = new ZIMUserFullInfo();
+            zimUserFullInfo.baseInfo = zimUserInfo;
+            return zimUserFullInfo;
+        }
+        // no  user cache
         if (userFullInfoMap == null || userFullInfoMap.isEmpty()) {
+            // group user cache
+            ZIMGroupMemberInfo groupMemberInfo = groupRepository.getGroupMemberInfo(userID);
+            if (groupMemberInfo != null) {
+                ZIMUserFullInfo userFullInfo = new ZIMUserFullInfo();
+                userFullInfo.baseInfo = groupMemberInfo;
+                return userFullInfo;
+            }
+            return null;
+        } else {
+            ZIMUserFullInfo zimUserFullInfo = userFullInfoMap.get(userID);
+            if (zimUserFullInfo != null) {
+                return zimUserFullInfo;
+            }
             return null;
         }
-        return userFullInfoMap.get(userID);
     }
 
     public void queryUserInfo(List<String> userIDList, ZIMUsersInfoQueryConfig config,
@@ -201,6 +251,33 @@ public class ZIMUserRepository {
     }
 
     public void onUserRuleUpdated(ZIM zim, ZIMUserRule rule) {
+
+    }
+
+    public void updateUserAvatarUrl(String userAvatarUrl, ZIMUserAvatarUrlUpdatedCallback callback) {
+        if (ZIM.getInstance() == null) {
+            if (callback != null) {
+                ZIMError errorInfo = new ZIMError();
+                errorInfo.code = ZIMErrorCode.NO_INIT;
+                errorInfo.message = ZIMErrorCode.NO_INIT.toString();
+                callback.onUserAvatarUrlUpdated(userAvatarUrl, errorInfo);
+            }
+            return;
+        }
+        ZIM.getInstance().updateUserAvatarUrl(userAvatarUrl, new ZIMUserAvatarUrlUpdatedCallback() {
+            @Override
+            public void onUserAvatarUrlUpdated(String userAvatarUrl, ZIMError errorInfo) {
+                if (errorInfo.code == ZIMErrorCode.SUCCESS) {
+                    zimUserInfo.userAvatarUrl = userAvatarUrl;
+                }
+                if (callback != null) {
+                    callback.onUserAvatarUrlUpdated(userAvatarUrl, errorInfo);
+                }
+            }
+        });
+    }
+
+    public void onTokenWillExpire(ZIM zim, int second) {
 
     }
 }

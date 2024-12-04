@@ -26,7 +26,32 @@ import im.zego.zim.callback.ZIMCallJoinSentCallback;
 import im.zego.zim.callback.ZIMCallQuitSentCallback;
 import im.zego.zim.callback.ZIMCallRejectionSentCallback;
 import im.zego.zim.callback.ZIMCallingInvitationSentCallback;
+import im.zego.zim.callback.ZIMCombineMessageDetailQueriedCallback;
+import im.zego.zim.callback.ZIMConversationDeletedCallback;
+import im.zego.zim.callback.ZIMConversationListQueriedCallback;
+import im.zego.zim.callback.ZIMConversationMessageReceiptReadSentCallback;
+import im.zego.zim.callback.ZIMConversationNotificationStatusSetCallback;
+import im.zego.zim.callback.ZIMConversationPinnedListQueriedCallback;
+import im.zego.zim.callback.ZIMConversationPinnedStateUpdatedCallback;
+import im.zego.zim.callback.ZIMConversationQueriedCallback;
+import im.zego.zim.callback.ZIMConversationTotalUnreadMessageCountClearedCallback;
+import im.zego.zim.callback.ZIMConversationTotalUnreadMessageCountQueriedCallback;
+import im.zego.zim.callback.ZIMConversationUnreadMessageCountClearedCallback;
+import im.zego.zim.callback.ZIMConversationsAllDeletedCallback;
 import im.zego.zim.callback.ZIMEventHandler;
+import im.zego.zim.callback.ZIMGroupMemberInfoQueriedCallback;
+import im.zego.zim.callback.ZIMGroupMemberListQueriedCallback;
+import im.zego.zim.callback.ZIMMediaDownloadedCallback;
+import im.zego.zim.callback.ZIMMediaMessageSentCallback;
+import im.zego.zim.callback.ZIMMessageDeletedCallback;
+import im.zego.zim.callback.ZIMMessageQueriedCallback;
+import im.zego.zim.callback.ZIMMessageReactionAddedCallback;
+import im.zego.zim.callback.ZIMMessageReactionDeletedCallback;
+import im.zego.zim.callback.ZIMMessageReactionUserListQueriedCallback;
+import im.zego.zim.callback.ZIMMessageRevokedCallback;
+import im.zego.zim.callback.ZIMMessageSentCallback;
+import im.zego.zim.callback.ZIMMessageSentFullCallback;
+import im.zego.zim.callback.ZIMUserAvatarUrlUpdatedCallback;
 import im.zego.zim.callback.ZIMUsersInfoQueriedCallback;
 import im.zego.zim.entity.ZIMCallAcceptConfig;
 import im.zego.zim.entity.ZIMCallCancelConfig;
@@ -37,11 +62,27 @@ import im.zego.zim.entity.ZIMCallJoinConfig;
 import im.zego.zim.entity.ZIMCallQuitConfig;
 import im.zego.zim.entity.ZIMCallRejectConfig;
 import im.zego.zim.entity.ZIMCallingInviteConfig;
+import im.zego.zim.entity.ZIMCombineMessage;
+import im.zego.zim.entity.ZIMConversationDeleteConfig;
+import im.zego.zim.entity.ZIMConversationFilterOption;
+import im.zego.zim.entity.ZIMConversationQueryConfig;
+import im.zego.zim.entity.ZIMConversationTotalUnreadMessageCountQueryConfig;
+import im.zego.zim.entity.ZIMGroupMemberQueryConfig;
+import im.zego.zim.entity.ZIMMediaMessage;
+import im.zego.zim.entity.ZIMMessage;
+import im.zego.zim.entity.ZIMMessageDeleteConfig;
+import im.zego.zim.entity.ZIMMessageQueryConfig;
+import im.zego.zim.entity.ZIMMessageReactionUserQueryConfig;
+import im.zego.zim.entity.ZIMMessageRevokeConfig;
+import im.zego.zim.entity.ZIMMessageSendConfig;
 import im.zego.zim.entity.ZIMUserFullInfo;
 import im.zego.zim.entity.ZIMUserInfo;
 import im.zego.zim.entity.ZIMUsersInfoQueryConfig;
 import im.zego.zim.enums.ZIMConnectionEvent;
 import im.zego.zim.enums.ZIMConnectionState;
+import im.zego.zim.enums.ZIMConversationNotificationStatus;
+import im.zego.zim.enums.ZIMConversationType;
+import im.zego.zim.enums.ZIMMediaFileType;
 import java.util.HashMap;
 import java.util.List;
 
@@ -189,13 +230,13 @@ public class ZegoSignalingPlugin implements ZegoSignalingPluginProtocol {
     }
 
     @Override
-    public void sendRoomMessage(String text, String roomID, SendRoomMessageCallback callback) {
-        service.sendRoomMessage(text, roomID, callback);
+    public void sendRoomTextMessage(String text, String roomID, SendRoomMessageCallback callback) {
+        service.sendRoomTextMessage(text, roomID, callback);
     }
 
     @Override
-    public void sendInRoomCommandMessage(String command, String roomID, SendRoomMessageCallback callback) {
-        service.sendInRoomCommandMessage(command, roomID, callback);
+    public void sendRoomCommandMessage(String command, String roomID, SendRoomMessageCallback callback) {
+        service.sendRoomCommandMessage(command, roomID, callback);
     }
 
     @Override
@@ -345,5 +386,131 @@ public class ZegoSignalingPlugin implements ZegoSignalingPluginProtocol {
 
     public ZIMConnectionState getConnectionState() {
         return service.getConnectionState();
+    }
+
+    public void replyMessage(ZIMMessage message, ZIMMessage repliedMessage, ZIMMessageSendConfig config,
+        ZIMMessageSentFullCallback callback) {
+        service.replyMessage(message, repliedMessage, config, callback);
+    }
+
+    public void sendMediaMessage(ZIMMediaMessage message, String toConversationID, ZIMConversationType conversationType,
+        ZIMMessageSendConfig config, ZIMMediaMessageSentCallback callback) {
+        service.sendMediaMessage(message, toConversationID, conversationType, config, callback);
+    }
+
+    public void queryHistoryMessage(String conversationID, ZIMConversationType conversationType,
+        ZIMMessageQueryConfig config, ZIMMessageQueriedCallback callback) {
+        service.queryHistoryMessage(conversationID, conversationType, config, callback);
+    }
+
+    public void sendMessage(ZIMMessage message, String toConversationID, ZIMConversationType conversationType,
+        ZIMMessageSendConfig config, ZIMMessageSentCallback callback) {
+        service.sendMessage(message, toConversationID, conversationType, config, callback);
+    }
+
+    public void deleteMessages(List<ZIMMessage> messageList, String conversationID,
+        ZIMConversationType conversationType, ZIMMessageDeleteConfig config, ZIMMessageDeletedCallback callback) {
+        service.deleteMessages(messageList, conversationID, conversationType, config, callback);
+    }
+
+    public void revokeMessage(ZIMMessage message, ZIMMessageRevokeConfig config, ZIMMessageRevokedCallback callback) {
+        service.revokeMessage(message, config, callback);
+    }
+
+    public void downloadMediaFile(ZIMMediaMessage message, ZIMMediaFileType type, ZIMMediaDownloadedCallback callback) {
+        service.downloadMediaFile(message, type, callback);
+    }
+
+    public void updateUserAvatarUrl(String userAvatarUrl, ZIMUserAvatarUrlUpdatedCallback callback) {
+        service.updateUserAvatarUrl(userAvatarUrl, callback);
+    }
+
+    public void addMessageReaction(String reactionType, ZIMMessage message, ZIMMessageReactionAddedCallback callback) {
+        service.addMessageReaction(reactionType, message, callback);
+    }
+
+    public void deleteMessageReaction(String reactionType, ZIMMessage message,
+        ZIMMessageReactionDeletedCallback callback) {
+        service.deleteMessageReaction(reactionType, message, callback);
+    }
+
+    public void queryMessageReactionUserList(ZIMMessage message, ZIMMessageReactionUserQueryConfig config,
+        ZIMMessageReactionUserListQueriedCallback callback) {
+        service.queryMessageReactionUserList(message, config, callback);
+    }
+
+    public void queryGroupMemberInfo(String userID, String groupID, ZIMGroupMemberInfoQueriedCallback callback) {
+        service.queryGroupMemberInfo(userID, groupID, callback);
+    }
+
+    public void queryGroupMemberList(String groupID, ZIMGroupMemberQueryConfig config,
+        ZIMGroupMemberListQueriedCallback callback) {
+        service.queryGroupMemberList(groupID, config, callback);
+    }
+
+    public void queryConversationList(
+        ZIMConversationQueryConfig config, ZIMConversationListQueriedCallback callback) {
+        service.queryConversationList(config, callback);
+    }
+
+    public void queryConversationList(ZIMConversationQueryConfig config, ZIMConversationFilterOption option,
+        ZIMConversationListQueriedCallback callback) {
+        service.queryConversationList(config, option, callback);
+    }
+
+
+    public void queryConversation(String conversationID, ZIMConversationType conversationType,
+        ZIMConversationQueriedCallback callback) {
+        service.queryConversation(conversationID, conversationType, callback);
+    }
+
+    public void queryConversationPinnedList(ZIMConversationQueryConfig config,
+        ZIMConversationPinnedListQueriedCallback callback) {
+        service.queryConversationPinnedList(config, callback);
+    }
+
+    public void queryConversationTotalUnreadMessageCount(
+        ZIMConversationTotalUnreadMessageCountQueryConfig config,
+        ZIMConversationTotalUnreadMessageCountQueriedCallback callback) {
+        service.queryConversationTotalUnreadMessageCount(config, callback);
+    }
+
+    public void updateConversationPinnedState(boolean isPinned, String conversationID,
+        ZIMConversationType conversationType, ZIMConversationPinnedStateUpdatedCallback callback) {
+        service.updateConversationPinnedState(isPinned, conversationID, conversationType, callback);
+    }
+
+    public void deleteConversation(String conversationID, ZIMConversationType conversationType,
+        ZIMConversationDeleteConfig config, ZIMConversationDeletedCallback callback) {
+        service.deleteConversation(conversationID, conversationType, config, callback);
+    }
+
+    public void deleteAllConversations(ZIMConversationDeleteConfig config,
+        ZIMConversationsAllDeletedCallback callback) {
+        service.deleteAllConversations(config, callback);
+    }
+
+    public void clearConversationUnreadMessageCount(String conversationID, ZIMConversationType conversationType,
+        ZIMConversationUnreadMessageCountClearedCallback callback) {
+        service.clearConversationUnreadMessageCount(conversationID, conversationType, callback);
+    }
+
+    public void clearConversationTotalUnreadMessageCount(
+        ZIMConversationTotalUnreadMessageCountClearedCallback callback) {
+        service.clearConversationTotalUnreadMessageCount(callback);
+    }
+
+    public void setConversationNotificationStatus(ZIMConversationNotificationStatus status, String conversationID,
+        ZIMConversationType conversationType, ZIMConversationNotificationStatusSetCallback callback) {
+        service.setConversationNotificationStatus(status, conversationID, conversationType, callback);
+    }
+
+    public void sendConversationMessageReceiptRead(String conversationID, ZIMConversationType conversationType,
+        ZIMConversationMessageReceiptReadSentCallback callback) {
+        service.sendConversationMessageReceiptRead(conversationID, conversationType, callback);
+    }
+
+    public void queryCombineMessageDetail(ZIMCombineMessage message, ZIMCombineMessageDetailQueriedCallback callback) {
+        service.queryCombineMessageDetail(message, callback);
     }
 }
