@@ -1,7 +1,6 @@
 package com.zegocloud.uikit.plugin.signaling;
 
 import android.app.Application;
-import android.util.Log;
 import com.zegocloud.uikit.plugin.adapter.plugins.signaling.CancelInvitationCallback;
 import com.zegocloud.uikit.plugin.adapter.plugins.signaling.ConnectUserCallback;
 import com.zegocloud.uikit.plugin.adapter.plugins.signaling.EndRoomBatchOperationCallback;
@@ -892,13 +891,11 @@ public class ZegoSignalingPluginService {
     }
 
     public void connectUser(String userID, String userName, String token, ConnectUserCallback callback) {
+        Timber.d("zim login() called with: userID = [" + userID + "], userName = [" + userName + "]");
         ZIMUserInfo zimUserInfo = new ZIMUserInfo();
         zimUserInfo.userID = userID;
         zimUserInfo.userName = userName;
-        Timber.d("zim login() called with: userID = [" + userID + "], userName = [" + userName + "], token = [" + token
-            + "], callback = [" + callback + "]");
         userRepository.login(zimUserInfo, token, new ZIMLoggedInCallback() {
-
             public void onLoggedIn(ZIMError errorInfo) {
                 Timber.d("zim login() result called with: errorInfo = [" + errorInfo + "]");
                 if (callback != null) {

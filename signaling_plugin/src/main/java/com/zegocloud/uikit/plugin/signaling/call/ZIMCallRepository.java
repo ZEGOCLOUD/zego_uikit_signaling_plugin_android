@@ -113,8 +113,8 @@ public class ZIMCallRepository {
         if (!first.isPresent()) {
             if (callback != null) {
                 ZIMError errorInfo = new ZIMError();
-                errorInfo.code = ZIMErrorCode.CALL_ERROR;
-                errorInfo.message = ZIMErrorCode.CALL_ERROR.toString();
+                errorInfo.code = ZIMErrorCode.CALL_DOES_NOT_EXIST;
+                errorInfo.message = ZIMErrorCode.CALL_DOES_NOT_EXIST.toString();
                 callback.onCallCancelSent(callID, new ArrayList<>(invitees), errorInfo);
             }
             return;
@@ -148,8 +148,8 @@ public class ZIMCallRepository {
         if (!first.isPresent()) {
             if (callback != null) {
                 ZIMError errorInfo = new ZIMError();
-                errorInfo.code = ZIMErrorCode.CALL_ERROR;
-                errorInfo.message = ZIMErrorCode.CALL_ERROR.toString();
+                errorInfo.code = ZIMErrorCode.CALL_DOES_NOT_EXIST;
+                errorInfo.message = ZIMErrorCode.CALL_DOES_NOT_EXIST.toString();
                 callback.onCallAcceptanceSent(callID, errorInfo);
             }
             return;
@@ -183,8 +183,8 @@ public class ZIMCallRepository {
         if (!first.isPresent()) {
             if (callback != null) {
                 ZIMError errorInfo = new ZIMError();
-                errorInfo.code = ZIMErrorCode.CALL_ERROR;
-                errorInfo.message = ZIMErrorCode.CALL_ERROR.toString();
+                errorInfo.code = ZIMErrorCode.CALL_DOES_NOT_EXIST;
+                errorInfo.message = ZIMErrorCode.CALL_DOES_NOT_EXIST.toString();
                 callback.onCallRejectionSent(callID, errorInfo);
             }
             return;
@@ -220,8 +220,8 @@ public class ZIMCallRepository {
         if (!first.isPresent()) {
             if (callback != null) {
                 ZIMError errorInfo = new ZIMError();
-                errorInfo.code = ZIMErrorCode.CALL_ERROR;
-                errorInfo.message = ZIMErrorCode.CALL_ERROR.toString();
+                errorInfo.code = ZIMErrorCode.CALL_DOES_NOT_EXIST;
+                errorInfo.message = ZIMErrorCode.CALL_DOES_NOT_EXIST.toString();
                 callback.onCallJoinSent(callID, null, errorInfo);
             }
             return;
@@ -260,8 +260,8 @@ public class ZIMCallRepository {
         if (!first.isPresent()) {
             if (callback != null) {
                 ZIMError errorInfo = new ZIMError();
-                errorInfo.code = ZIMErrorCode.CALL_ERROR;
-                errorInfo.message = ZIMErrorCode.CALL_ERROR.toString();
+                errorInfo.code = ZIMErrorCode.CALL_DOES_NOT_EXIST;
+                errorInfo.message = ZIMErrorCode.CALL_DOES_NOT_EXIST.toString();
                 callback.onCallQuitSent(callID, null, errorInfo);
             }
             return;
@@ -297,8 +297,8 @@ public class ZIMCallRepository {
         if (!first.isPresent()) {
             if (callback != null) {
                 ZIMError errorInfo = new ZIMError();
-                errorInfo.code = ZIMErrorCode.CALL_ERROR;
-                errorInfo.message = ZIMErrorCode.CALL_ERROR.toString();
+                errorInfo.code = ZIMErrorCode.CALL_DOES_NOT_EXIST;
+                errorInfo.message = ZIMErrorCode.CALL_DOES_NOT_EXIST.toString();
                 callback.onCallEndSent(callID, null, errorInfo);
             }
             return;
@@ -335,8 +335,8 @@ public class ZIMCallRepository {
         if (!first.isPresent()) {
             if (callback != null) {
                 ZIMError errorInfo = new ZIMError();
-                errorInfo.code = ZIMErrorCode.CALL_ERROR;
-                errorInfo.message = ZIMErrorCode.CALL_ERROR.toString();
+                errorInfo.code = ZIMErrorCode.CALL_DOES_NOT_EXIST;
+                errorInfo.message = ZIMErrorCode.CALL_DOES_NOT_EXIST.toString();
                 callback.onCallingInvitationSent(callID, null, errorInfo);
             }
             return;

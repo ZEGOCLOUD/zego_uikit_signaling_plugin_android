@@ -1,5 +1,6 @@
 package com.zegocloud.uikit.plugin.signaling.user;
 
+import android.text.TextUtils;
 import com.zegocloud.uikit.plugin.adapter.plugins.signaling.RenewTokenCallback;
 import com.zegocloud.uikit.plugin.signaling.group.ZIMGroupRepository;
 import im.zego.zim.ZIM;
@@ -43,6 +44,15 @@ public class ZIMUserRepository {
                 ZIMError errorInfo = new ZIMError();
                 errorInfo.code = ZIMErrorCode.NO_INIT;
                 errorInfo.message = ZIMErrorCode.NO_INIT.toString();
+                callback.onLoggedIn(errorInfo);
+            }
+            return;
+        }
+        if (userInfo == null || TextUtils.isEmpty(userInfo.userID) || TextUtils.isEmpty(userInfo.userName)) {
+            if (callback != null) {
+                ZIMError errorInfo = new ZIMError();
+                errorInfo.code = ZIMErrorCode.PARAM_INVALID;
+                errorInfo.message = ZIMErrorCode.PARAM_INVALID.toString();
                 callback.onLoggedIn(errorInfo);
             }
             return;
