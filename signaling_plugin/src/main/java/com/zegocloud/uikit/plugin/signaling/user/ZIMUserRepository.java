@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import org.json.JSONObject;
+import timber.log.Timber;
 
 public class ZIMUserRepository {
 
@@ -154,12 +155,16 @@ public class ZIMUserRepository {
                 userFullInfo.baseInfo = groupMemberInfo;
                 return userFullInfo;
             }
+            Timber.d(
+                "getMemoryUserInfo(), userFullInfoMap is Empty or Null,And cannot find in groupMemberInfo for userID:"
+                    + userID);
             return null;
         } else {
             ZIMUserFullInfo zimUserFullInfo = userFullInfoMap.get(userID);
             if (zimUserFullInfo != null) {
                 return zimUserFullInfo;
             }
+            Timber.d("getMemoryUserInfo(),zimUserFullInfo has Data,but no data for userID:" + userID);
             return null;
         }
     }

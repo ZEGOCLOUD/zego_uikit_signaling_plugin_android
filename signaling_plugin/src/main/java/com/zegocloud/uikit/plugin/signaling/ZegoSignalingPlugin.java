@@ -18,6 +18,7 @@ import com.zegocloud.uikit.plugin.adapter.plugins.signaling.SetUsersInRoomAttrib
 import com.zegocloud.uikit.plugin.adapter.plugins.signaling.ZegoSignalingPluginEventHandler;
 import com.zegocloud.uikit.plugin.adapter.plugins.signaling.ZegoSignalingPluginNotificationConfig;
 import com.zegocloud.uikit.plugin.adapter.plugins.signaling.ZegoSignalingPluginProtocol;
+import im.zego.zim.ZIM;
 import im.zego.zim.callback.ZIMCallAcceptanceSentCallback;
 import im.zego.zim.callback.ZIMCallCancelSentCallback;
 import im.zego.zim.callback.ZIMCallEndSentCallback;
@@ -83,6 +84,7 @@ import im.zego.zim.enums.ZIMConnectionState;
 import im.zego.zim.enums.ZIMConversationNotificationStatus;
 import im.zego.zim.enums.ZIMConversationType;
 import im.zego.zim.enums.ZIMMediaFileType;
+import im.zego.zpns.ZPNsManager;
 import java.util.HashMap;
 import java.util.List;
 
@@ -107,6 +109,11 @@ public class ZegoSignalingPlugin implements ZegoSignalingPluginProtocol {
     @Override
     public void init(Application application, Long appID, String appSign) {
         service.init(application, appID, appSign);
+    }
+
+    @Override
+    public boolean isZIMInitSuccess() {
+        return ZIM.getInstance() != null;
     }
 
     @Override
@@ -245,11 +252,6 @@ public class ZegoSignalingPlugin implements ZegoSignalingPluginProtocol {
     }
 
     @Override
-    public String getVersion() {
-        return "1.3.0";
-    }
-
-    @Override
     public void registerPluginEventHandler(ZegoSignalingPluginEventHandler handler) {
         service.registerPluginEventHandler(handler);
     }
@@ -300,6 +302,11 @@ public class ZegoSignalingPlugin implements ZegoSignalingPluginProtocol {
     @Override
     public void setAppType(int appType) {
         service.setAppType(appType);
+    }
+
+    @Override
+    public String getVersion() {
+        return "zim version:" + ZIM.getVersion() + ",zpns version:" + ZPNsManager.getInstance().getVersion();
     }
 
     @Override
@@ -448,8 +455,7 @@ public class ZegoSignalingPlugin implements ZegoSignalingPluginProtocol {
         service.queryGroupMemberList(groupID, config, callback);
     }
 
-    public void queryConversationList(
-        ZIMConversationQueryConfig config, ZIMConversationListQueriedCallback callback) {
+    public void queryConversationList(ZIMConversationQueryConfig config, ZIMConversationListQueriedCallback callback) {
         service.queryConversationList(config, callback);
     }
 
@@ -469,8 +475,7 @@ public class ZegoSignalingPlugin implements ZegoSignalingPluginProtocol {
         service.queryConversationPinnedList(config, callback);
     }
 
-    public void queryConversationTotalUnreadMessageCount(
-        ZIMConversationTotalUnreadMessageCountQueryConfig config,
+    public void queryConversationTotalUnreadMessageCount(ZIMConversationTotalUnreadMessageCountQueryConfig config,
         ZIMConversationTotalUnreadMessageCountQueriedCallback callback) {
         service.queryConversationTotalUnreadMessageCount(config, callback);
     }

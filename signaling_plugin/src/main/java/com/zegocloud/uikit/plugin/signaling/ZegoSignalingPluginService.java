@@ -27,6 +27,7 @@ import com.zegocloud.uikit.plugin.signaling.group.ZIMGroupRepository;
 import com.zegocloud.uikit.plugin.signaling.message.ZIMMessageRepository;
 import com.zegocloud.uikit.plugin.signaling.room.ZIMRoomRepository;
 import com.zegocloud.uikit.plugin.signaling.user.ZIMUserRepository;
+import im.zego.uikit.libuikitreport.ReportUtil;
 import im.zego.zim.ZIM;
 import im.zego.zim.callback.ZIMCallAcceptanceSentCallback;
 import im.zego.zim.callback.ZIMCallCancelSentCallback;
@@ -872,11 +873,16 @@ public class ZegoSignalingPluginService {
         if (!result) {
             return;
         }
+
+        HashMap<String, Object> commonParams = new HashMap<>();
+        commonParams.put(ReportUtil.PLATFORM, "android");
+        commonParams.put(ReportUtil.PLATFORM_VERSION, android.os.Build.VERSION.SDK_INT + "");
+        ReportUtil.create(appID, appSign, commonParams);
+
         ZIMAppConfig zimAppConfig = new ZIMAppConfig();
         zimAppConfig.appID = appID;
         zimAppConfig.appSign = appSign;
         ZIM.create(zimAppConfig, application);
-
         setEventHandler(zimEventHandler);
         zpnsRepository.setApplication(application);
     }
@@ -1462,30 +1468,37 @@ public class ZegoSignalingPluginService {
     }
 
     public void enableFCMPush() {
+        Timber.d("enableFCMPush() called");
         zpnsRepository.enableFCMPush();
     }
 
     public void disableFCMPush() {
+        Timber.d("disableFCMPush() called");
         zpnsRepository.disableFCMPush();
     }
 
     public void enableHWPush(String hwAppID) {
+        Timber.d("enableHWPush() called with: hwAppID = [" + hwAppID + "]");
         zpnsRepository.enableHWPush(hwAppID);
     }
 
     public void enableMiPush(String miAppID, String miAppKey) {
+        Timber.d("enableMiPush() called with: miAppID = [" + miAppID + "]");
         zpnsRepository.enableMiPush(miAppID, miAppKey);
     }
 
     public void enableVivoPush(String vivoAppID, String vivoAppKey) {
+        Timber.d("enableVivoPush() called with: vivoAppID = [" + vivoAppID + "]");
         zpnsRepository.enableVivoPush(vivoAppID, vivoAppKey);
     }
 
     public void enableOppoPush(String oppoAppID, String oppoAppKey, String oppoAppSecret) {
+        Timber.d("enableOppoPush() called with: oppoAppID = [" + oppoAppID + "]");
         zpnsRepository.enableOppoPush(oppoAppID, oppoAppKey, oppoAppSecret);
     }
 
     public void setAppType(int appType) {
+        Timber.d("setAppType() called with: appType = [" + appType + "]");
         zpnsRepository.setAppType(appType);
     }
 
@@ -1498,10 +1511,12 @@ public class ZegoSignalingPluginService {
     }
 
     public void registerPush() {
+        Timber.d("registerPush() called");
         zpnsRepository.registerPush();
     }
 
     public void unregisterPush() {
+        Timber.d("unregisterPush() called");
         zpnsRepository.unregisterPush();
     }
 
