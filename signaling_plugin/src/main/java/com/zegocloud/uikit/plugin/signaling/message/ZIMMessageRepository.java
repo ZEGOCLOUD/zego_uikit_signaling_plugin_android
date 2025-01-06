@@ -30,15 +30,12 @@ import im.zego.zim.entity.ZIMMessageRootRepliedCountInfo;
 import im.zego.zim.entity.ZIMMessageSendConfig;
 import im.zego.zim.entity.ZIMMessageSentStatusChangeInfo;
 import im.zego.zim.entity.ZIMRevokeMessage;
-import im.zego.zim.entity.ZIMTextMessage;
 import im.zego.zim.entity.ZIMUserStatus;
 import im.zego.zim.enums.ZIMConversationType;
 import im.zego.zim.enums.ZIMErrorCode;
 import im.zego.zim.enums.ZIMMediaFileType;
-import im.zego.zim.enums.ZIMMessageType;
 import java.util.ArrayList;
 import java.util.List;
-import timber.log.Timber;
 
 public class ZIMMessageRepository {
 
