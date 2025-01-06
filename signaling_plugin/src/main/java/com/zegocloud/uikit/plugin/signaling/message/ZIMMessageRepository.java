@@ -24,12 +24,14 @@ import im.zego.zim.entity.ZIMMessageQueryConfig;
 import im.zego.zim.entity.ZIMMessageReaction;
 import im.zego.zim.entity.ZIMMessageReactionUserQueryConfig;
 import im.zego.zim.entity.ZIMMessageReceiptInfo;
+import im.zego.zim.entity.ZIMMessageReceivedInfo;
 import im.zego.zim.entity.ZIMMessageRevokeConfig;
 import im.zego.zim.entity.ZIMMessageRootRepliedCountInfo;
 import im.zego.zim.entity.ZIMMessageSendConfig;
 import im.zego.zim.entity.ZIMMessageSentStatusChangeInfo;
 import im.zego.zim.entity.ZIMRevokeMessage;
 import im.zego.zim.entity.ZIMTextMessage;
+import im.zego.zim.entity.ZIMUserStatus;
 import im.zego.zim.enums.ZIMConversationType;
 import im.zego.zim.enums.ZIMErrorCode;
 import im.zego.zim.enums.ZIMMediaFileType;
@@ -277,6 +279,29 @@ public class ZIMMessageRepository {
     }
 
     public void onReceivePeerMessage(ZIM zim, ArrayList<ZIMMessage> messageList, String fromUserID) {
+
+    }
+
+    public void onPeerMessageReceived(ZIM zim, ArrayList<ZIMMessage> messageList, ZIMMessageReceivedInfo info,
+        String fromUserID) {
+
+    }
+
+    public void onGroupAliasUpdated(ZIM zim, String groupAlias, String operatedUserID, String groupID) {
+
+    }
+
+    public void onGroupMessageReceived(ZIM zim, ArrayList<ZIMMessage> messageList, ZIMMessageReceivedInfo info,
+        String fromGroupID) {
+
+    }
+
+    public void onRoomMessageReceived(ZIM zim, ArrayList<ZIMMessage> messageList, ZIMMessageReceivedInfo info,
+        String fromRoomID) {
+
+    }
+
+    public void onUserStatusUpdated(ZIM zim, ArrayList<ZIMUserStatus> userStatusList) {
 
     }
 }

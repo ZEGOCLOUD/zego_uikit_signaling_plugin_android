@@ -127,6 +127,7 @@ import im.zego.zim.entity.ZIMMessageReaction;
 import im.zego.zim.entity.ZIMMessageReactionUserInfo;
 import im.zego.zim.entity.ZIMMessageReactionUserQueryConfig;
 import im.zego.zim.entity.ZIMMessageReceiptInfo;
+import im.zego.zim.entity.ZIMMessageReceivedInfo;
 import im.zego.zim.entity.ZIMMessageRevokeConfig;
 import im.zego.zim.entity.ZIMMessageRootRepliedCountInfo;
 import im.zego.zim.entity.ZIMMessageSendConfig;
@@ -150,6 +151,7 @@ import im.zego.zim.entity.ZIMTextMessage;
 import im.zego.zim.entity.ZIMUserFullInfo;
 import im.zego.zim.entity.ZIMUserInfo;
 import im.zego.zim.entity.ZIMUserRule;
+import im.zego.zim.entity.ZIMUserStatus;
 import im.zego.zim.entity.ZIMUsersInfoQueryConfig;
 import im.zego.zim.enums.ZIMBlacklistChangeAction;
 import im.zego.zim.enums.ZIMConnectionEvent;
@@ -556,6 +558,11 @@ public class ZegoSignalingPluginService {
 
             public void onRoomAttributesUpdated(ZIM zim, ZIMRoomAttributesUpdateInfo info, String roomID) {
                 super.onRoomAttributesUpdated(zim, info, roomID);
+
+                Timber.d(
+                    "onRoomAttributesUpdated() called with: zim = [" + zim + "], info = [" + info + "], roomID = ["
+                        + roomID + "]");
+
                 zimEventHandlerNotifyList.notifyAllListener(handler -> {
                     handler.onRoomAttributesUpdated(zim, info, roomID);
                 });
@@ -580,6 +587,10 @@ public class ZegoSignalingPluginService {
             public void onRoomAttributesBatchUpdated(ZIM zim, ArrayList<ZIMRoomAttributesUpdateInfo> infos,
                 String roomID) {
                 super.onRoomAttributesBatchUpdated(zim, infos, roomID);
+
+                Timber.d("onRoomAttributesBatchUpdated() called with: zim = [" + zim + "], infos = [" + infos
+                    + "], roomID = [" + roomID + "]");
+
                 zimEventHandlerNotifyList.notifyAllListener(handler -> {
                     handler.onRoomAttributesBatchUpdated(zim, infos, roomID);
                 });
@@ -654,6 +665,9 @@ public class ZegoSignalingPluginService {
                 String roomID) {
                 super.onRoomStateChanged(zim, state, event, extendedData, roomID);
 
+                Timber.d(
+                    "onRoomStateChanged() called with: zim = [" + zim + "], state = [" + state + "], event = [" + event
+                        + "], extendedData = [" + extendedData + "], roomID = [" + roomID + "]");
                 roomRepository.onRoomStateChanged(zim, state, event, extendedData, roomID);
 
                 zimEventHandlerNotifyList.notifyAllListener(handler -> {
@@ -665,6 +679,9 @@ public class ZegoSignalingPluginService {
             public void onConversationChanged(ZIM zim,
                 ArrayList<ZIMConversationChangeInfo> conversationChangeInfoList) {
                 super.onConversationChanged(zim, conversationChangeInfoList);
+
+                Timber.d("onConversationChanged() called with: zim = [" + zim + "], conversationChangeInfoList = ["
+                    + conversationChangeInfoList + "]");
                 zimEventHandlerNotifyList.notifyAllListener(handler -> {
                     handler.onConversationChanged(zim, conversationChangeInfoList);
                 });
@@ -861,6 +878,59 @@ public class ZegoSignalingPluginService {
                 messageRepository.onReceivePeerMessage(zim, messageList, fromUserID);
                 zimEventHandlerNotifyList.notifyAllListener(handler -> {
                     handler.onReceivePeerMessage(zim, messageList, fromUserID);
+                });
+            }
+
+            @Override
+            public void onPeerMessageReceived(ZIM zim, ArrayList<ZIMMessage> messageList, ZIMMessageReceivedInfo info,
+                String fromUserID) {
+                super.onPeerMessageReceived(zim, messageList, info, fromUserID);
+
+                messageRepository.onPeerMessageReceived(zim, messageList, info, fromUserID);
+                zimEventHandlerNotifyList.notifyAllListener(handler -> {
+                    handler.onPeerMessageReceived(zim, messageList, info, fromUserID);
+                });
+            }
+
+            @Override
+            public void onGroupAliasUpdated(ZIM zim, String groupAlias, String operatedUserID, String groupID) {
+                super.onGroupAliasUpdated(zim, groupAlias, operatedUserID, groupID);
+
+                messageRepository.onGroupAliasUpdated(zim, groupAlias, operatedUserID, groupID);
+                zimEventHandlerNotifyList.notifyAllListener(handler -> {
+                    handler.onGroupAliasUpdated(zim, groupAlias, operatedUserID, groupID);
+                });
+            }
+
+            @Override
+            public void onGroupMessageReceived(ZIM zim, ArrayList<ZIMMessage> messageList, ZIMMessageReceivedInfo info,
+                String fromGroupID) {
+                super.onGroupMessageReceived(zim, messageList, info, fromGroupID);
+
+                messageRepository.onGroupMessageReceived(zim, messageList, info, fromGroupID);
+                zimEventHandlerNotifyList.notifyAllListener(handler -> {
+                    handler.onGroupMessageReceived(zim, messageList, info, fromGroupID);
+                });
+            }
+
+            @Override
+            public void onRoomMessageReceived(ZIM zim, ArrayList<ZIMMessage> messageList, ZIMMessageReceivedInfo info,
+                String fromRoomID) {
+                super.onRoomMessageReceived(zim, messageList, info, fromRoomID);
+
+                messageRepository.onRoomMessageReceived(zim, messageList, info, fromRoomID);
+                zimEventHandlerNotifyList.notifyAllListener(handler -> {
+                    handler.onRoomMessageReceived(zim, messageList, info, fromRoomID);
+                });
+            }
+
+            @Override
+            public void onUserStatusUpdated(ZIM zim, ArrayList<ZIMUserStatus> userStatusList) {
+                super.onUserStatusUpdated(zim, userStatusList);
+
+                messageRepository.onUserStatusUpdated(zim, userStatusList);
+                zimEventHandlerNotifyList.notifyAllListener(handler -> {
+                    handler.onUserStatusUpdated(zim, userStatusList);
                 });
             }
         };
