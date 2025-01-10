@@ -306,7 +306,7 @@ public class ZegoSignalingPlugin implements ZegoSignalingPluginProtocol {
 
     @Override
     public String getVersion() {
-        return "zim version:" + ZIM.getVersion() + ",zpns version:" + ZPNsManager.getInstance().getVersion();
+        return service.getVersion();
     }
 
     @Override

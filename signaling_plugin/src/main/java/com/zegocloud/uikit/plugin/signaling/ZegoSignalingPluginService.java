@@ -170,6 +170,7 @@ import im.zego.zim.enums.ZIMMediaFileType;
 import im.zego.zim.enums.ZIMRoomAttributesUpdateAction;
 import im.zego.zim.enums.ZIMRoomEvent;
 import im.zego.zim.enums.ZIMRoomState;
+import im.zego.zpns.ZPNsManager;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -559,9 +560,8 @@ public class ZegoSignalingPluginService {
             public void onRoomAttributesUpdated(ZIM zim, ZIMRoomAttributesUpdateInfo info, String roomID) {
                 super.onRoomAttributesUpdated(zim, info, roomID);
 
-                Timber.d(
-                    "onRoomAttributesUpdated() called with: zim = [" + zim + "], info = [" + info + "], roomID = ["
-                        + roomID + "]");
+                Timber.d("onRoomAttributesUpdated() called with: zim = [" + zim + "], info = [" + info + "], roomID = ["
+                    + roomID + "]");
 
                 zimEventHandlerNotifyList.notifyAllListener(handler -> {
                     handler.onRoomAttributesUpdated(zim, info, roomID);
@@ -937,8 +937,9 @@ public class ZegoSignalingPluginService {
     }
 
     public void init(Application application, Long appID, String appSign) {
-        Timber.d("ZIM init() called with: application = [" + application + "], appID = [" + appID + "], isZIMInited = ["
-            + isZIMInited.get() + "]");
+        Timber.d(
+            "ZIM init() called with: appID = [" + appID + "], isZIMInited = [" + isZIMInited + "], getVersion() = ["
+                + getVersion() + "] ");
         boolean result = isZIMInited.compareAndSet(false, true);
         if (!result) {
             return;
@@ -1993,5 +1994,9 @@ public class ZegoSignalingPluginService {
                 }
             }
         });
+    }
+
+    public String getVersion() {
+        return "zim version:" + ZIM.getVersion() + ",zpns version: 2.7.0" ;
     }
 }
