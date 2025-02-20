@@ -27,7 +27,6 @@ import com.zegocloud.uikit.plugin.signaling.group.ZIMGroupRepository;
 import com.zegocloud.uikit.plugin.signaling.message.ZIMMessageRepository;
 import com.zegocloud.uikit.plugin.signaling.room.ZIMRoomRepository;
 import com.zegocloud.uikit.plugin.signaling.user.ZIMUserRepository;
-import im.zego.uikit.libuikitreport.ReportUtil;
 import im.zego.zim.ZIM;
 import im.zego.zim.callback.ZIMCallAcceptanceSentCallback;
 import im.zego.zim.callback.ZIMCallCancelSentCallback;
@@ -945,10 +944,10 @@ public class ZegoSignalingPluginService {
             return;
         }
 
-        HashMap<String, Object> commonParams = new HashMap<>();
-        commonParams.put(ReportUtil.PLATFORM, "android");
-        commonParams.put(ReportUtil.PLATFORM_VERSION, android.os.Build.VERSION.SDK_INT + "");
-        ReportUtil.create(appID, appSign, commonParams);
+//        HashMap<String, Object> commonParams = new HashMap<>();
+//        commonParams.put(ReportUtil.PLATFORM, "android");
+//        commonParams.put(ReportUtil.PLATFORM_VERSION, android.os.Build.VERSION.SDK_INT + "");
+//        ReportUtil.create(appID, appSign, commonParams);
 
         ZIMAppConfig zimAppConfig = new ZIMAppConfig();
         zimAppConfig.appID = appID;
