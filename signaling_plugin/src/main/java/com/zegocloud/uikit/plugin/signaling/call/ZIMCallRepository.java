@@ -2,6 +2,7 @@ package com.zegocloud.uikit.plugin.signaling.call;
 
 import androidx.annotation.Nullable;
 import com.zegocloud.uikit.plugin.signaling.user.ZIMUserRepository;
+import im.zego.uikit.libuikitreport.ReportUtil;
 import im.zego.zim.ZIM;
 import im.zego.zim.callback.ZIMCallAcceptanceSentCallback;
 import im.zego.zim.callback.ZIMCallCancelSentCallback;
@@ -42,10 +43,12 @@ import im.zego.zim.enums.ZIMCallState;
 import im.zego.zim.enums.ZIMCallUserState;
 import im.zego.zim.enums.ZIMErrorCode;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Predicate;
+import org.json.JSONArray;
 
 /**
  * cache call data,and no special business logic,
@@ -91,20 +94,20 @@ public class ZIMCallRepository {
                     addCallInfo(callInfo);
                 }
 
-//                JSONArray inviteesArray = new JSONArray();
-//                invitees.forEach(inviteesArray::put);
-//                HashMap<String, Object> hashMap = new HashMap<>();
-//                hashMap.put("invitees", inviteesArray.toString());
-//                hashMap.put("count", invitees.size());
-//                JSONArray errorArray = new JSONArray();
-//                info.errorUserList.forEach(errorArray::put);
-//                hashMap.put("error_userlist", errorArray.toString());
-//                hashMap.put("error_count", info.errorUserList.size());
-//                hashMap.put("call_id", callID);
-//                hashMap.put("error", errorInfo.code.value());
-//                hashMap.put("msg", errorInfo.message);
-//                hashMap.put("extended_data", config.extendedData);
-//                ReportUtil.reportEvent("callinvite", hashMap);
+                JSONArray inviteesArray = new JSONArray();
+                invitees.forEach(inviteesArray::put);
+                HashMap<String, Object> hashMap = new HashMap<>();
+                hashMap.put("invitees", inviteesArray.toString());
+                hashMap.put("count", invitees.size());
+                JSONArray errorArray = new JSONArray();
+                info.errorUserList.forEach(errorArray::put);
+                hashMap.put("error_userlist", errorArray.toString());
+                hashMap.put("error_count", info.errorUserList.size());
+                hashMap.put("call_id", callID);
+                hashMap.put("error", errorInfo.code.value());
+                hashMap.put("msg", errorInfo.message);
+                hashMap.put("extended_data", config.extendedData);
+                ReportUtil.reportEvent("callinvite", hashMap);
 
                 if (callback != null) {
                     callback.onCallInvitationSent(callID, info, errorInfo);
@@ -363,19 +366,19 @@ public class ZIMCallRepository {
             public void onCallingInvitationSent(String callID, ZIMCallingInvitationSentInfo info, ZIMError errorInfo) {
                 ZIMCallInfo findCall = first.get();
 
-//                JSONArray inviteesArray = new JSONArray();
-//                invitees.forEach(inviteesArray::put);
-//                HashMap<String, Object> hashMap = new HashMap<>();
-//                hashMap.put("invitees", inviteesArray.toString());
-//                hashMap.put("count", invitees.size());
-//                hashMap.put("call_id", callID);
-//                JSONArray errorArray = new JSONArray();
-//                info.errorUserList.forEach(errorArray::put);
-//                hashMap.put("error_userlist", errorArray.toString());
-//                hashMap.put("error_count", info.errorUserList.size());
-//                hashMap.put("error", errorInfo.code.value());
-//                hashMap.put("msg", errorInfo.message);
-//                ReportUtil.reportEvent("callinvite", hashMap);
+                JSONArray inviteesArray = new JSONArray();
+                invitees.forEach(inviteesArray::put);
+                HashMap<String, Object> hashMap = new HashMap<>();
+                hashMap.put("invitees", inviteesArray.toString());
+                hashMap.put("count", invitees.size());
+                hashMap.put("call_id", callID);
+                JSONArray errorArray = new JSONArray();
+                info.errorUserList.forEach(errorArray::put);
+                hashMap.put("error_userlist", errorArray.toString());
+                hashMap.put("error_count", info.errorUserList.size());
+                hashMap.put("error", errorInfo.code.value());
+                hashMap.put("msg", errorInfo.message);
+                ReportUtil.reportEvent("callinvite", hashMap);
 
                 if (callback != null) {
                     callback.onCallingInvitationSent(callID, info, errorInfo);
@@ -441,11 +444,11 @@ public class ZIMCallRepository {
 
 
     public void onCallInvitationReceived(ZIM zim, ZIMCallInvitationReceivedInfo info, String callID) {
-//        HashMap<String, Object> hashMap = new HashMap<>();
-//        hashMap.put("call_id", callID);
-//        hashMap.put("inviter", info.inviter);
-//        hashMap.put("extended_data", info.extendedData);
-//        ReportUtil.reportEvent("invitationReceived", hashMap);
+        HashMap<String, Object> hashMap = new HashMap<>();
+        hashMap.put("call_id", callID);
+        hashMap.put("inviter", info.inviter);
+        hashMap.put("extended_data", info.extendedData);
+        ReportUtil.reportEvent("invitationReceived", hashMap);
         addCallInfo(ZIMCallRepUtils.convertToZIMCallInfo(info, callID));
     }
 
