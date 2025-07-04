@@ -2,7 +2,6 @@ package com.zegocloud.uikit.plugin.signaling.user;
 
 import android.text.TextUtils;
 import com.zegocloud.uikit.plugin.adapter.plugins.signaling.RenewTokenCallback;
-import com.zegocloud.uikit.plugin.signaling.group.ZIMGroupRepository;
 import im.zego.zim.ZIM;
 import im.zego.zim.callback.ZIMLoggedInCallback;
 import im.zego.zim.callback.ZIMTokenRenewedCallback;
@@ -10,7 +9,6 @@ import im.zego.zim.callback.ZIMUserAvatarUrlUpdatedCallback;
 import im.zego.zim.callback.ZIMUsersInfoQueriedCallback;
 import im.zego.zim.entity.ZIMError;
 import im.zego.zim.entity.ZIMErrorUserInfo;
-import im.zego.zim.entity.ZIMGroupMemberInfo;
 import im.zego.zim.entity.ZIMUserFullInfo;
 import im.zego.zim.entity.ZIMUserInfo;
 import im.zego.zim.entity.ZIMUserRule;
@@ -24,7 +22,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import org.json.JSONObject;
-import timber.log.Timber;
 
 public class ZIMUserRepository {
 
@@ -33,11 +30,6 @@ public class ZIMUserRepository {
     private ZIMConnectionState connectionState;
     private ZIMConnectionEvent connectionEvent;
     private Map<String, ZIMUserFullInfo> userFullInfoMap;
-    private ZIMGroupRepository groupRepository;
-
-    public ZIMUserRepository(ZIMGroupRepository groupRepository) {
-        this.groupRepository = groupRepository;
-    }
 
     public void login(ZIMUserInfo userInfo, String token, ZIMLoggedInCallback callback) {
         if (ZIM.getInstance() == null) {
@@ -146,27 +138,10 @@ public class ZIMUserRepository {
             zimUserFullInfo.baseInfo = zimUserInfo;
             return zimUserFullInfo;
         }
-        // no  user cache
-        if (userFullInfoMap == null || userFullInfoMap.isEmpty()) {
-            // group user cache
-            ZIMGroupMemberInfo groupMemberInfo = groupRepository.getGroupMemberInfo(userID);
-            if (groupMemberInfo != null) {
-                ZIMUserFullInfo userFullInfo = new ZIMUserFullInfo();
-                userFullInfo.baseInfo = groupMemberInfo;
-                return userFullInfo;
-            }
-            Timber.d(
-                "getMemoryUserInfo(), userFullInfoMap is Empty or Null,And cannot find in groupMemberInfo for userID:"
-                    + userID);
-            return null;
-        } else {
-            ZIMUserFullInfo zimUserFullInfo = userFullInfoMap.get(userID);
-            if (zimUserFullInfo != null) {
-                return zimUserFullInfo;
-            }
-            Timber.d("getMemoryUserInfo(),zimUserFullInfo has Data,but no data for userID:" + userID);
+        if (userFullInfoMap == null) {
             return null;
         }
+        return userFullInfoMap.getOrDefault(userID, null);
     }
 
     public void queryUserInfo(List<String> userIDList, ZIMUsersInfoQueryConfig config,

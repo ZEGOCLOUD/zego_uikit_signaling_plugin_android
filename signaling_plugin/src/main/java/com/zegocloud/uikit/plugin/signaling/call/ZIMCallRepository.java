@@ -527,4 +527,8 @@ public class ZIMCallRepository {
     @Deprecated
     public void onCallInviteesAnsweredTimeout(ZIM zim, ArrayList<String> invitees, String callID) {
     }
+
+    public void onUserLogout() {
+        zimCallInfoList.clear();
+    }
 }

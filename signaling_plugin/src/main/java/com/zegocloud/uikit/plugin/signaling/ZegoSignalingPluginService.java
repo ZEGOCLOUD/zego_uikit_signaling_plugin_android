@@ -132,6 +132,7 @@ import im.zego.zim.entity.ZIMMessageRevokeConfig;
 import im.zego.zim.entity.ZIMMessageRootRepliedCountInfo;
 import im.zego.zim.entity.ZIMMessageSendConfig;
 import im.zego.zim.entity.ZIMMessageSentStatusChangeInfo;
+import im.zego.zim.entity.ZIMMultipleMessage;
 import im.zego.zim.entity.ZIMPushConfig;
 import im.zego.zim.entity.ZIMRevokeMessage;
 import im.zego.zim.entity.ZIMRoomAdvancedConfig;
@@ -170,7 +171,6 @@ import im.zego.zim.enums.ZIMMediaFileType;
 import im.zego.zim.enums.ZIMRoomAttributesUpdateAction;
 import im.zego.zim.enums.ZIMRoomEvent;
 import im.zego.zim.enums.ZIMRoomState;
-import im.zego.zpns.ZPNsManager;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -199,7 +199,7 @@ public class ZegoSignalingPluginService {
 
     public ZegoSignalingPluginService() {
         groupRepository = new ZIMGroupRepository();
-        userRepository = new ZIMUserRepository(groupRepository);
+        userRepository = new ZIMUserRepository();
         roomRepository = new ZIMRoomRepository();
         callRepository = new ZIMCallRepository(userRepository);
         zpnsRepository = new ZPNSRepository(userRepository);
@@ -685,6 +685,7 @@ public class ZegoSignalingPluginService {
                 zimEventHandlerNotifyList.notifyAllListener(handler -> {
                     handler.onConversationChanged(zim, conversationChangeInfoList);
                 });
+                conversationRepository.onConversationChanged(zim, conversationChangeInfoList);
             }
 
             @Override
@@ -693,6 +694,7 @@ public class ZegoSignalingPluginService {
                 zimEventHandlerNotifyList.notifyAllListener(handler -> {
                     handler.onConversationTotalUnreadMessageCountUpdated(zim, totalUnreadMessageCount);
                 });
+                conversationRepository.onConversationTotalUnreadMessageCountUpdated(zim, totalUnreadMessageCount);
             }
 
             @Override
@@ -988,6 +990,8 @@ public class ZegoSignalingPluginService {
     public void disconnectUser() {
         Timber.d("disconnectUser() called");
         userRepository.logout();
+        callRepository.onUserLogout();
+        conversationRepository.onUserLogout();
     }
 
 
@@ -1631,7 +1635,16 @@ public class ZegoSignalingPluginService {
     }
 
     public ZIMUserFullInfo getMemoryUserInfo(String userID) {
-        return userRepository.getMemoryUserInfo(userID);
+        ZIMUserFullInfo memoryUserInfo = userRepository.getMemoryUserInfo(userID);
+        if (memoryUserInfo == null) {
+            ZIMGroupMemberInfo groupMemberInfo = groupRepository.getGroupMemberInfo(userID);
+            if (groupMemberInfo != null) {
+                ZIMUserFullInfo userFullInfo = new ZIMUserFullInfo();
+                userFullInfo.baseInfo = groupMemberInfo;
+                return userFullInfo;
+            }
+        }
+        return memoryUserInfo;
     }
 
     public void replyMessage(ZIMMessage message, ZIMMessage repliedMessage, ZIMMessageSendConfig config,
@@ -1657,12 +1670,18 @@ public class ZegoSignalingPluginService {
             }
 
             @Override
-            public void onMediaUploadingProgress(ZIMMessage message, long currentFileSize, long totalFileSize) {
+            public void onMediaUploadingProgress(ZIMMediaMessage message, long currentFileSize, long totalFileSize) {
                 Timber.d("replyMessage() onMediaUploadingProgress() called with: message = [" + message
                     + "], currentFileSize = [" + currentFileSize + "], totalFileSize = [" + totalFileSize + "]");
                 if (callback != null) {
                     callback.onMediaUploadingProgress(message, currentFileSize, totalFileSize);
                 }
+            }
+
+            @Override
+            public void onMultipleMediaUploadingProgress(ZIMMultipleMessage message, long currentFileSize,
+                long totalFileSize, int messageInfoIndex, long currentIndexFileSize, long totalIndexFileSize) {
+
             }
         });
     }
@@ -1726,7 +1745,7 @@ public class ZegoSignalingPluginService {
             + callback + "]");
         messageRepository.downloadMediaFile(message, type, new ZIMMediaDownloadedCallback() {
             @Override
-            public void onMediaDownloaded(ZIMMediaMessage message, ZIMError errorInfo) {
+            public void onMediaDownloaded(ZIMMessage message, ZIMError errorInfo) {
                 Timber.d("downloadMediaFile onMediaDownloaded() called with: message = [" + message + "], errorInfo = ["
                     + errorInfo + "]");
                 if (callback != null) {
@@ -1735,7 +1754,7 @@ public class ZegoSignalingPluginService {
             }
 
             @Override
-            public void onMediaDownloadingProgress(ZIMMediaMessage message, long currentFileSize, long totalFileSize) {
+            public void onMediaDownloadingProgress(ZIMMessage message, long currentFileSize, long totalFileSize) {
                 Timber.d("downloadMediaFile onMediaDownloadingProgress() called with: message = [" + message
                     + "], currentFileSize = [" + currentFileSize + "], totalFileSize = [" + totalFileSize + "]");
                 if (callback != null) {
@@ -1997,6 +2016,6 @@ public class ZegoSignalingPluginService {
     }
 
     public String getVersion() {
-        return "zim version:" + ZIM.getVersion() + ",zpns version: 2.7.0" ;
+        return "zim version:" + ZIM.getVersion() + ",zpns version: 2.7.0";
     }
 }

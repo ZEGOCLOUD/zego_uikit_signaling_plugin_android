@@ -12,16 +12,26 @@ import im.zego.zim.callback.ZIMConversationTotalUnreadMessageCountClearedCallbac
 import im.zego.zim.callback.ZIMConversationTotalUnreadMessageCountQueriedCallback;
 import im.zego.zim.callback.ZIMConversationUnreadMessageCountClearedCallback;
 import im.zego.zim.callback.ZIMConversationsAllDeletedCallback;
+import im.zego.zim.entity.ZIMConversation;
+import im.zego.zim.entity.ZIMConversationChangeInfo;
 import im.zego.zim.entity.ZIMConversationDeleteConfig;
 import im.zego.zim.entity.ZIMConversationFilterOption;
 import im.zego.zim.entity.ZIMConversationQueryConfig;
 import im.zego.zim.entity.ZIMConversationTotalUnreadMessageCountQueryConfig;
 import im.zego.zim.entity.ZIMError;
+import im.zego.zim.enums.ZIMConversationEvent;
 import im.zego.zim.enums.ZIMConversationNotificationStatus;
 import im.zego.zim.enums.ZIMConversationType;
 import im.zego.zim.enums.ZIMErrorCode;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 public class ZIMConversationRepository {
+
+    private Map<String, ZIMConversation> zimConversationMap = new HashMap<>();
+    private int totalUnreadMessageCount = 0;
+
 
     public void queryConversationList(ZIMConversationQueryConfig config, ZIMConversationListQueriedCallback callback) {
         if (ZIM.getInstance() == null) {
@@ -33,7 +43,19 @@ public class ZIMConversationRepository {
             }
             return;
         }
-        ZIM.getInstance().queryConversationList(config, callback);
+        ZIM.getInstance().queryConversationList(config, new ZIMConversationListQueriedCallback() {
+            @Override
+            public void onConversationListQueried(ArrayList<ZIMConversation> conversationList, ZIMError errorInfo) {
+                if (errorInfo.code == ZIMErrorCode.SUCCESS) {
+                    conversationList.forEach(conversation -> {
+                        zimConversationMap.put(conversation.conversationID, conversation);
+                    });
+                }
+                if (callback != null) {
+                    callback.onConversationListQueried(conversationList, errorInfo);
+                }
+            }
+        });
     }
 
     public void queryConversationList(ZIMConversationQueryConfig config, ZIMConversationFilterOption option,
@@ -47,7 +69,19 @@ public class ZIMConversationRepository {
             }
             return;
         }
-        ZIM.getInstance().queryConversationList(config, option, callback);
+        ZIM.getInstance().queryConversationList(config, option, new ZIMConversationListQueriedCallback() {
+            @Override
+            public void onConversationListQueried(ArrayList<ZIMConversation> conversationList, ZIMError errorInfo) {
+                if (errorInfo.code == ZIMErrorCode.SUCCESS) {
+                    conversationList.forEach(conversation -> {
+                        zimConversationMap.put(conversation.conversationID, conversation);
+                    });
+                }
+                if (callback != null) {
+                    callback.onConversationListQueried(conversationList, errorInfo);
+                }
+            }
+        });
     }
 
     public void queryConversation(String conversationID, ZIMConversationType conversationType,
@@ -61,7 +95,19 @@ public class ZIMConversationRepository {
             }
             return;
         }
-        ZIM.getInstance().queryConversation(conversationID, conversationType, callback);
+        ZIM.getInstance().queryConversation(conversationID, conversationType, new ZIMConversationQueriedCallback() {
+            @Override
+            public void onConversationQueried(ZIMConversation conversation, ZIMError errorInfo) {
+                if (errorInfo.code == ZIMErrorCode.SUCCESS) {
+                    if (conversation != null) {
+                        zimConversationMap.put(conversation.conversationID, conversation);
+                    }
+                }
+                if (callback != null) {
+                    callback.onConversationQueried(conversation, errorInfo);
+                }
+            }
+        });
     }
 
     public void queryConversationPinnedList(ZIMConversationQueryConfig config,
@@ -75,7 +121,20 @@ public class ZIMConversationRepository {
             }
             return;
         }
-        ZIM.getInstance().queryConversationPinnedList(config, callback);
+        ZIM.getInstance().queryConversationPinnedList(config, new ZIMConversationPinnedListQueriedCallback() {
+            @Override
+            public void onConversationPinnedListQueried(ArrayList<ZIMConversation> conversationList,
+                ZIMError errorInfo) {
+                if (errorInfo.code == ZIMErrorCode.SUCCESS) {
+                    conversationList.forEach(conversation -> {
+                        zimConversationMap.put(conversation.conversationID, conversation);
+                    });
+                }
+                if (callback != null) {
+                    callback.onConversationPinnedListQueried(conversationList, errorInfo);
+                }
+            }
+        });
     }
 
     public void queryConversationTotalUnreadMessageCount(ZIMConversationTotalUnreadMessageCountQueryConfig config,
@@ -100,7 +159,7 @@ public class ZIMConversationRepository {
                 errorInfo.code = ZIMErrorCode.NO_INIT;
                 errorInfo.message = ZIMErrorCode.NO_INIT.toString();
                 callback.onConversationPinnedStateUpdated(conversationID, conversationType, errorInfo);
-            }
+             }
             return;
         }
         ZIM.getInstance().updateConversationPinnedState(isPinned, conversationID, conversationType, callback);
@@ -117,7 +176,19 @@ public class ZIMConversationRepository {
             }
             return;
         }
-        ZIM.getInstance().deleteConversation(conversationID, conversationType, config, callback);
+        ZIM.getInstance()
+            .deleteConversation(conversationID, conversationType, config, new ZIMConversationDeletedCallback() {
+                @Override
+                public void onConversationDeleted(String conversationID, ZIMConversationType conversationType,
+                    ZIMError errorInfo) {
+                    if (errorInfo.code == ZIMErrorCode.SUCCESS) {
+                        zimConversationMap.remove(conversationID);
+                    }
+                    if (callback != null) {
+                        callback.onConversationDeleted(conversationID, conversationType, errorInfo);
+                    }
+                }
+            });
     }
 
     public void deleteAllConversations(ZIMConversationDeleteConfig config,
@@ -131,7 +202,14 @@ public class ZIMConversationRepository {
             }
             return;
         }
-        ZIM.getInstance().deleteAllConversations(config, callback);
+        ZIM.getInstance().deleteAllConversations(config, new ZIMConversationsAllDeletedCallback() {
+            @Override
+            public void onConversationsAllDeleted(ZIMError errorInfo) {
+                if (errorInfo.code == ZIMErrorCode.SUCCESS) {
+                    zimConversationMap.clear();
+                }
+            }
+        });
     }
 
     public void clearConversationUnreadMessageCount(String conversationID, ZIMConversationType conversationType,
@@ -159,7 +237,15 @@ public class ZIMConversationRepository {
             }
             return;
         }
-        ZIM.getInstance().clearConversationTotalUnreadMessageCount(callback);
+        ZIM.getInstance()
+            .clearConversationTotalUnreadMessageCount(new ZIMConversationTotalUnreadMessageCountClearedCallback() {
+                @Override
+                public void onConversationTotalUnreadMessageCountCleared(ZIMError errorInfo) {
+                    if (errorInfo.code == ZIMErrorCode.SUCCESS) {
+                        totalUnreadMessageCount = 0;
+                    }
+                }
+            });
     }
 
     public void setConversationNotificationStatus(ZIMConversationNotificationStatus status, String conversationID,
@@ -190,4 +276,25 @@ public class ZIMConversationRepository {
         ZIM.getInstance().sendConversationMessageReceiptRead(conversationID, conversationType, callback);
     }
 
+    public void onConversationChanged(ZIM zim, ArrayList<ZIMConversationChangeInfo> conversationChangeInfoList) {
+        conversationChangeInfoList.forEach(zimConversationChangeInfo -> {
+            ZIMConversation conversation = zimConversationChangeInfo.conversation;
+            if (zimConversationChangeInfo.event == ZIMConversationEvent.DELETED) {
+                zimConversationMap.remove(conversation.conversationID);
+            } else if (zimConversationChangeInfo.event == ZIMConversationEvent.ADDED
+                || zimConversationChangeInfo.event == ZIMConversationEvent.UPDATED
+                || zimConversationChangeInfo.event == ZIMConversationEvent.DISABLED) {
+                zimConversationMap.put(conversation.conversationID, conversation);
+            }
+        });
+    }
+
+    public void onConversationTotalUnreadMessageCountUpdated(ZIM zim, int totalUnreadMessageCount) {
+        this.totalUnreadMessageCount = totalUnreadMessageCount;
+    }
+
+    public void onUserLogout() {
+        totalUnreadMessageCount = 0;
+        zimConversationMap.clear();
+    }
 }
