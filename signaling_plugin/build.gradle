@@ -24,7 +24,7 @@ android {
 }
 
 dependencies {
-    api 'im.zego:zim:2.21.0'
+    api 'im.zego:zim:2.21.1'
     api 'im.zego:zpns:2.8.0'
     api 'com.github.ZEGOCLOUD:zego_uikit_plugin_adapter_android:[3.0.1,)'
 
